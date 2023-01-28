@@ -18,7 +18,7 @@ Face::Face(const std::vector<std::array<double,3>> &points, std::vector<int> ind
 
         //Implement tesselation calc
         m_faceAreaVector = calFaceAreaVector(points);
-	//std::cout << m_faceAreaVector[0] << " " << m_faceAreaVector[1] << " " << m_faceAreaVector[2] << std::endl;
+	std::cout << m_faceAreaVector[0] << " " << m_faceAreaVector[1] << " " << m_faceAreaVector[2] << std::endl;
 }
 
 // Return vector of points forming face
@@ -58,18 +58,18 @@ std::array<double,3> Face::calFaceAreaVector(const std::vector<std::array<double
 
                 // While the current point is not the final point, use i and i+1
                 if(i<m_vertices.size()-1){
-                        p = points[i];
-                        p2 = points[i+1];
+                        p = points[m_vertices[i]];
+                        p2 = points[m_vertices[i+1]];
                 }
                 // When i is the final point, use point 0 and i
                 else{
-                        p = points[i];
-                        p2 = points[0];
+                        p = points[m_vertices[i]];
+                        p2 = points[m_vertices[0]];
                 }
 
                 // Vector differences to set up cross product
                 std::array<double,3> vector1, vector2;
-		vector1 = diff(p, p2);
+		vector1 = diff(p2, p);
 		vector2 = diff(p2, m_faceCentroid);
 
                 // take the cross product * 0.5 to get area of each triangle

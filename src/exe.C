@@ -24,12 +24,14 @@ int main(int argc, char* argv[]){
 	fvMesh thisMesh = fvMesh();
 
 	// Read in the number of expected points
-        int numPoints;
-	meshFile >> numPoints;
+	int numPoints;
+	std::string temp;
+	std::getline(meshFile, temp);
+	numPoints = std::stoi(temp);
 
 	std::cout << numPoints << std::endl;
 	// Loop over the number of points skipping ( and )
-	for(int i=0;i<numPoints+3;i++){
+	for(int i=0;i<numPoints+2;i++){
 		// Read next line
 		std::string line;
 		std::getline(meshFile, line);
@@ -48,7 +50,6 @@ int main(int argc, char* argv[]){
 	}
 	
 	int numFaces;
-	std::string temp;
 	std::getline(meshFile, temp);
 	numFaces = std::stoi(temp);
 
