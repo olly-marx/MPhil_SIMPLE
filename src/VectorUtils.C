@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include "VectorUtils.H"
 
@@ -30,4 +31,18 @@ std::array<double,3> diff(std::array<double,3> a, std::array<double,3> b){
 std::array<double,3> scalarMult(double a, std::array<double,3> b){
 	for(int i=0;i<3;i++) b[i] = a*b[i];
 	return b;
+}
+
+double dot(std::array<double,3> a, std::array<double,3> b){
+	double result = 0.0;
+	for(int i=0;i<3;i++) result += a[i] + b[i];
+	return result;
+}
+
+double mod(std::array<double,3> a){
+	double result = 0.0;
+	for(int i=0;i<3;i++){
+		result += a[i] * a[i];
+	}
+	return std::sqrt(result);
 }

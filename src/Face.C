@@ -17,13 +17,23 @@ Face::Face(const std::vector<std::array<double,3>> &points, std::vector<int> ind
 	//std::cout << m_faceCentroid[0] << " " << m_faceCentroid[1] << " " << m_faceCentroid[2] << std::endl;
 
         //Implement tesselation calc
-        m_faceAreaVector = calFaceAreaVector(points);
+        m_faceAreaVector = calcFaceAreaVector(points);
 	std::cout << m_faceAreaVector[0] << " " << m_faceAreaVector[1] << " " << m_faceAreaVector[2] << std::endl;
 }
 
 // Return vector of points forming face
 std::vector<int> Face::getFaceVertexIndices(){
         return m_vertices;
+}
+
+// Return face centroid coordinates
+std::array<double,3> Face::getFaceCentroid() const{
+	return m_faceCentroid;
+}
+
+// Return face centroid coordinates
+std::array<double,3> Face::getFaceAreaVector() const{
+	return m_faceAreaVector;
 }
 
 // Algorithm to take points defining face and calculate position of face
@@ -47,7 +57,7 @@ std::array<double,3> Face::calcFaceCentroid(const std::vector<std::array<double,
 }
 
 // Algorithm to tesselate face points and calculate face area
-std::array<double,3> Face::calFaceAreaVector(const std::vector<std::array<double, 3>> &points){
+std::array<double,3> Face::calcFaceAreaVector(const std::vector<std::array<double, 3>> &points){
         //Init empty result array
         std::array<double,3> result = {0.0, 0.0, 0.0};
 
@@ -73,8 +83,7 @@ std::array<double,3> Face::calFaceAreaVector(const std::vector<std::array<double
 		vector2 = diff(p2, m_faceCentroid);
 
                 // take the cross product * 0.5 to get area of each triangle
-		result = cross(vector1, vector2);
-		result = scalarMult(0.5, result);
+		result = sum( result , scalarMult(0.5 , cross(vector1, vector2) ) );
         }
         return result;
 }

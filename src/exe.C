@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "Face.H"
+#include "Cell.H"
 #include "fvMesh.H"
 
 // File reading will be done within the main method here
@@ -29,7 +30,6 @@ int main(int argc, char* argv[]){
 	std::getline(meshFile, temp);
 	numPoints = std::stoi(temp);
 
-	std::cout << numPoints << std::endl;
 	// Loop over the number of points skipping ( and )
 	for(int i=0;i<numPoints+2;i++){
 		// Read next line
@@ -59,8 +59,6 @@ int main(int argc, char* argv[]){
 		std::string line;
 		std::getline(meshFile, line);
 
-		std::cout << line << std::endl;
-
 		// Skip the first and last lines because of the parenthesis
 		if(i>0 && i<numFaces+1){
 			// Find the position of the parenthesis for this point
@@ -76,6 +74,35 @@ int main(int argc, char* argv[]){
 			thisMesh.addFace(f);
 		}
 	}
+
+	int numCells;
+	std::getline(meshFile, temp);
+	numCells = std::stoi(temp);
+
+	// Loop over the number of cells skipping ( and )
+	for(int i=0;i<numCells+2;i++){
+		// Read next line
+		std::string line;
+		std::getline(meshFile, line);
+
+		std::cout << line << std::endl;
+
+		// Skip the first and last lines because of the parenthesis
+		if(i>0 && i<numCells+1){
+			// Find the position of the parenthesis for this point
+			size_t start = line.find_first_of("("),
+				end = line.find_first_of(")"); 
+			// Read point data into triplet
+			std::vector<int> faces;
+			int len = std::stoi(line.substr(start-1,start));
+			faces.resize(len);
+			std::istringstream iss(line.substr(start+1, end-start-1));
+			for(int j=0;j<len;j++) iss >> faces[j];
+			Cell c = Cell(thisMesh.allFaces(), faces);
+			thisMesh.addCell(c);
+		}
+	}
+
 	std::cout << thisMesh.getMeshDetails() << std::endl;
 
         return 0;
