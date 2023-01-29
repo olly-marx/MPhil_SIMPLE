@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
 			vertices.resize(len);
 			std::istringstream iss(line.substr(start+1, end-start-1));
 			for(int j=0;j<len;j++) iss >> vertices[j];
-			Face f = Face(thisMesh.allPoints(), vertices);
+			Face f = Face(thisMesh.allPoints(), vertices, i-1);
 			thisMesh.addFace(f);
 		}
 	}
@@ -85,8 +85,6 @@ int main(int argc, char* argv[]){
 		std::string line;
 		std::getline(meshFile, line);
 
-		std::cout << line << std::endl;
-
 		// Skip the first and last lines because of the parenthesis
 		if(i>0 && i<numCells+1){
 			// Find the position of the parenthesis for this point
@@ -98,12 +96,13 @@ int main(int argc, char* argv[]){
 			faces.resize(len);
 			std::istringstream iss(line.substr(start+1, end-start-1));
 			for(int j=0;j<len;j++) iss >> faces[j];
-			Cell c = Cell(thisMesh.allFaces(), faces);
+			Cell c = Cell(thisMesh.allFaces(), faces, i-1);
 			thisMesh.addCell(c);
 		}
 	}
 
 	std::cout << thisMesh.getMeshDetails() << std::endl;
+	std::cout << thisMesh.displayVolumesAndAreas() << std::endl;
 
         return 0;
 }

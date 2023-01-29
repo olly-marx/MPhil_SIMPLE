@@ -19,10 +19,11 @@ class fvMesh{
 		void addCell(Cell);
 		const Face& getFace(int);
 		const std::array<double,3>& getPoint(int);
-		const std::vector<std::array<double,3>>& allPoints();
-		const std::vector<Face>& allFaces();
-		const std::vector<Cell>& allCells();
+		std::vector<std::array<double,3>>& allPoints();
+		std::vector<Face>& allFaces();
+		std::vector<Cell>& allCells();
 		std::string getMeshDetails();
+		std::string displayVolumesAndAreas();
         private:
                 std::vector<std::array<double,3>> m_points;
                 std::vector<Face> m_faces;

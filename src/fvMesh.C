@@ -10,6 +10,7 @@
 #include "fvMesh.H"
 #include "Face.H"
 #include "Cell.H"
+#include "VectorUtils.H"
 
 fvMesh::fvMesh(){
 	std::vector<std::array<double,3>> m_points;	
@@ -37,15 +38,15 @@ const std::array<double,3>& fvMesh::getPoint(int index){
 	return m_points[index];
 }
 
-const std::vector<std::array<double,3>>& fvMesh::allPoints(){
+std::vector<std::array<double,3>>& fvMesh::allPoints(){
 	return m_points;
 }
 
-const std::vector<Face>& fvMesh::allFaces(){
+std::vector<Face>& fvMesh::allFaces(){
 	return m_faces;
 }
 
-const std::vector<Cell>& fvMesh::allCells(){
+std::vector<Cell>& fvMesh::allCells(){
 	return m_cells;
 }
 
@@ -56,5 +57,18 @@ std::string fvMesh::getMeshDetails(){
 	out += "# Faces: " + std::to_string(m_faces.size()) +" \n";
 	out += "# Cells: " + std::to_string(m_cells.size()) +" \n";
 	out += "# Boundaries: " ;//+ std::to_string(m_points.size()) +" \n";
+	return out;
+}
+
+std::string fvMesh::displayVolumesAndAreas(){
+	std::string out = "Cell Volumes: \n";
+	for(Cell c : m_cells) out += std::to_string(c.getCellId()) + " " 
+		+ std::to_string(c.getCellVolume()) + "\n";
+	out += "\nFace Areas:\n";
+	for(Face f : m_faces) out += std::to_string(f.getFaceId()) + " " 
+		+ std::to_string(f.getFaceAreaVector()[0]) + " " 
+		+ std::to_string(f.getFaceAreaVector()[1]) + " " 
+		+ std::to_string(f.getFaceAreaVector()[2]) + " -- Mag:"
+		+ std::to_string( mod(f.getFaceAreaVector() ) ) + "\n";
 	return out;
 }
