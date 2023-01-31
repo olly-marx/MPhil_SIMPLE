@@ -35,7 +35,7 @@ std::array<double,3> scalarMult(double a, std::array<double,3> b){
 
 double dot(std::array<double,3> a, std::array<double,3> b){
 	double result = 0.0;
-	for(int i=0;i<3;i++) result += a[i] + b[i];
+	for(int i=0;i<3;i++) result += a[i] * b[i];
 	return result;
 }
 
@@ -45,4 +45,10 @@ double mod(std::array<double,3> a){
 		result += a[i] * a[i];
 	}
 	return std::sqrt(result);
+}
+
+std::string printV(std::array<double, 3> V){
+	std::string out = "";
+	for(int i=0;i<3;i++) out += std::to_string(V[i]) + " ";
+	return out;
 }

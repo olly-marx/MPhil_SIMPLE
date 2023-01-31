@@ -11,8 +11,11 @@
 // Face constructor, takes a vector of points to define a face of n Points
 Face::Face(const std::vector<std::array<double,3>> &points, std::vector<int> indices, int faceId){
 	m_faceId = faceId;
-
+	m_owner = -1;
+	m_neighbor = -1;
         m_vertices = indices;
+	m_isBoundary = false;
+	m_boundaryPatchId = -1;
 
         //Implement face centroid calculation
         m_faceCentroid = calcFaceCentroid(points);
@@ -61,6 +64,11 @@ void Face::setOwner(int o){
 // set owner cell integer index
 void Face::setNeighbor(int n){
 	m_neighbor = n;
+}
+
+void Face::makeBoundaryFace(int boundaryPatchId){
+	m_isBoundary = true;
+	m_boundaryPatchId = boundaryPatchId;
 }
 
 // Algorithm to take points defining face and calculate position of face

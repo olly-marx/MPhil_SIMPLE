@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 
+#include "BoundaryPatch.H"
 #include "Face.H"
 #include "Cell.H"
 #include "fvMesh.H"
@@ -101,8 +102,51 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+	int numBoundaryPatches;
+	std::getline(meshFile, temp);
+	numBoundaryPatches = std::stoi(temp);
+
+	//skip the initial backet
+	std::getline(meshFile, temp);
+	// Loop over the number of patches skipping ( and )
+	for(int i=0;i<numBoundaryPatches;i++){
+		std::vector<int> faces;
+		int len;
+		std::string patchName;
+		for(int j=0;j<5;j++){
+			// Read next line
+			std::string line;
+			std::getline(meshFile, line);
+			std::istringstream iss(line);
+
+			switch (j) {
+				case 0: {
+					iss >> patchName;
+					break;
+				}
+				case 1: {
+					len = std::stoi(line);
+					faces.resize(len);
+					break;
+				}
+				case 3: {
+					for(int k=0;k<len;k++) iss >> faces[k];
+					BoundaryPatch bp = BoundaryPatch(thisMesh.allFaces(), faces, patchName);
+					thisMesh.addBoundaryPatch(bp);
+					break;
+				}
+			}	
+		}
+	}
+
+	meshFile.close();
+
 	std::cout << thisMesh.getMeshDetails() << std::endl;
 	std::cout << thisMesh.displayVolumesAndAreas() << std::endl;
+	std::cout << thisMesh.displayCentroids() << std::endl;
+	std::cout << thisMesh.displayBoundaryFaces() << std::endl;
+	std::cout << thisMesh.displayCellNeighbors() << std::endl;
+	std::cout << thisMesh.displayFaceOwnerNeighbor() << std::endl;
 
         return 0;
 }

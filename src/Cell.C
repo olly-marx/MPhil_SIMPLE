@@ -28,7 +28,7 @@ Cell::Cell(std::vector<Face> &faceArr, std::vector<int> indices, int cellId){
 	//Set Owner and Neighbor cells based on the sign of the fP and faceVec
 	for(int i : m_faces){
 		std::array<double,3> fArea = faceArr[i].getFaceAreaVector(),
-			             fP = diff( faceArr[i].getFaceCentroid() , m_cellCentroid );
+			             fP = diff( m_cellCentroid , faceArr[i].getFaceCentroid() );
 		double direction = dot( fArea , fP );
 		if(direction > 0) faceArr[i].setOwner(m_cellId);
 		else if (direction < 0) faceArr[i].setNeighbor(m_cellId);
