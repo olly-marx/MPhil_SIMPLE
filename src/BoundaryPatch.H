@@ -13,15 +13,17 @@
 class BoundaryPatch{
         public:
 		// Constructor
-                BoundaryPatch(const std::vector<Face>&, std::vector<int>, std::string);
+                BoundaryPatch(int, int, std::string);
 
 		// Public member functions
-		std::string          getBoundaryPatchName();
-                std::vector<int>     getBoundaryFaceIndices();
+		std::string          getBoundaryPatchName() const;
+		int                  getBoundaryPatchStartFace() const;
+		int                  getBoundaryPatchLength() const;
         private:
 		// Private member variables
 		std::string          m_boundaryPatchName;
-                std::vector<int>     m_boundaryFaces;
+                int                  m_startFace;
+                int                  m_length;
 
 		// Private members funtions
 };

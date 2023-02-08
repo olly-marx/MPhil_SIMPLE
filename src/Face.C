@@ -122,3 +122,28 @@ std::array<double,3> Face::calcFaceAreaVector(const std::vector<std::array<doubl
         }
         return scalarMult(0.5, result);
 }
+
+double Face::getfx() const
+{
+	return m_fx;
+}
+
+void Face::setfx(double fx)
+{
+	m_fx = fx;
+}
+
+double Face::getDelta() const
+{
+	return m_delta;
+}
+
+void Face::setDelta(double delta)
+{
+	m_delta = delta;
+}
+
+bool Face::isBoundary() const
+{
+	return m_isBoundary;
+}

@@ -1,0 +1,291 @@
+//AUTHOR:       Oliver Marx - ojm40@cam.ac.uk
+
+#include <cstddef>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <ostream>
+#include <string>
+#include <vector>
+#include <sstream>
+
+#include "fvMesh.H"
+#include "fvMeshParser.H"
+
+fvMeshParser::fvMeshParser(std::string dir)
+{
+	m_fileDirectory = dir;
+}
+
+void fvMeshParser::readPointsFromFile(fvMesh& m)
+{
+	std::cout << "Reading points..." << std::endl;
+
+	std::string file {"points"};
+        std::ifstream meshFile(m_fileDirectory+file);
+
+        if(!meshFile){
+                std::cerr << file << " : file could not be opened" << std::endl;
+                exit(EXIT_FAILURE);
+	}
+
+	std::string trash;
+	while(std::getline(meshFile, trash) && !trash.empty());
+	std::getline(meshFile, trash);
+
+	// Read in the number of expected points
+	int numPoints;
+	std::string temp;
+	std::getline(meshFile, temp);
+	numPoints = std::stoi(temp);
+
+	// Loop over the number of points skipping ( and )
+	for(int i=0;i<numPoints+2;i++){
+		// Read next line
+		std::string line;
+		std::getline(meshFile, line);
+
+		// Skip the first and last lines because of the parenthesis
+		if(i>0 && i<numPoints+1){
+			// Find the position of the parenthesis for this point
+			size_t start = line.find_first_of("("),
+				end = line.find_first_of(")"); 
+			// Read point data into triplet
+			std::array<double,3> point;
+			std::istringstream iss(line.substr(start+1, end-start-1));
+			iss >> point[0] >> point[1] >> point[2];
+			m.addPoint(point);
+		}
+	}
+
+	std::cout << "Done!" << std::endl;
+
+	meshFile.close();
+}
+
+void fvMeshParser::readFacesFromFile(fvMesh& m)
+{
+	std::cout << "Reading faces..." << std::endl;
+
+	std::string file {"faces"};
+        std::ifstream meshFile(m_fileDirectory+file);
+
+        if(!meshFile){
+                std::cerr << file << " : file could not be opened" << std::endl;
+                exit(EXIT_FAILURE);
+	}
+
+	std::string trash;
+	while(std::getline(meshFile, trash) && !trash.empty());
+	std::getline(meshFile, trash);
+	
+	int numFaces;
+	std::string temp;
+	std::getline(meshFile, temp);
+	numFaces = std::stoi(temp);
+
+	// Loop over the number of faces skipping ( and )
+	for(int i=0;i<numFaces+2;i++){
+		// Read next line
+		std::string line;
+		std::getline(meshFile, line);
+
+		// Skip the first and last lines because of the parenthesis
+		if(i>0 && i<numFaces+1){
+			// Find the position of the parenthesis for this point
+			size_t start = line.find_first_of("("),
+				end = line.find_first_of(")"); 
+			// Read point data into triplet
+			std::vector<int> vertices;
+			int len = std::stoi(line.substr(start-1,start));
+			vertices.resize(len);
+			std::istringstream iss(line.substr(start+1, end-start-1));
+			for(int j=0;j<len;j++) iss >> vertices[j];
+			Face f = Face(m.allPoints(), vertices, i-1);
+			m.addFace(f);
+		}
+	}
+
+	std::cout << "Done!" << std::endl;
+	meshFile.close();
+}
+
+void fvMeshParser::readCellsFromFile(fvMesh& m)
+{
+	std::cout << "Reading owners..." << std::endl;
+
+	std::string file {"owner"};
+        std::ifstream meshFile(m_fileDirectory+file);
+
+        if(!meshFile){
+                std::cerr << file << " file could not be opened" << std::endl;
+                exit(EXIT_FAILURE);
+	}
+
+	std::string trash;
+	while(std::getline(meshFile, trash) && !trash.empty());
+	std::getline(meshFile, trash);
+
+	int numFaces;
+	std::string temp;
+	std::getline(meshFile, temp);
+	numFaces = std::stoi(temp);
+
+	std::vector<int> owners;
+	int numCells = 0;
+	std::vector<std::vector<int>> cellsfaces;
+
+	// Loop over the number of cells skipping ( and )
+	for(int i=0;i<numFaces+2;i++){
+		// Read next line
+		std::string line;
+		std::getline(meshFile, line);
+
+		// Skip the first and last lines because of the parenthesis
+		if(i>0 && i<numFaces+1)
+		{
+			// Read point data into triplet
+			int cellId = std::stoi(line);
+
+			owners.push_back(cellId);
+
+			if(cellId > numCells)
+			{
+				numCells = cellId;
+			}
+
+			m.allFaces()[i-1].setOwner(cellId);
+		}
+	}
+
+	std::cout << "Done!" << std::endl;
+
+	meshFile.close();
+
+	cellsfaces.resize(numCells+1);
+
+	for(std::size_t j=0;j<owners.size();j++)
+	{
+		cellsfaces[owners[j]].push_back(j);
+	}
+
+	for(std::size_t k=0;k<cellsfaces.size();k++)
+	{
+		Cell c = Cell(cellsfaces[k], k);
+		m.addCell(c);
+	}
+
+	std::cout << "Reading neighbours..." << std::endl;
+
+	file = "neighbour";
+        meshFile.open(m_fileDirectory+file);
+
+        if(!meshFile){
+                std::cerr << file << " file could not be opened" << std::endl;
+                exit(EXIT_FAILURE);
+	}
+
+	while(std::getline(meshFile, trash) && !trash.empty());
+	std::getline(meshFile, trash);
+
+	std::getline(meshFile, temp);
+	numFaces = std::stoi(temp);
+
+	// Loop over the number of internal faces skipping ( and )
+	for(int i=0;i<numFaces+2;i++){
+		// Read next line
+		std::string line;
+		std::getline(meshFile, line);
+
+		// Skip the first and last lines because of the parenthesis
+		if(i>0 && i<numFaces+1)
+		{
+			int cellId = std::stoi(line);
+
+			m.allFaces()[i-1].setNeighbor(cellId);
+
+			m.allCells()[cellId].addNeighborFace(i-1);
+		}
+	}
+
+	for(std::size_t i=0;i<m.allCells().size();i++)
+	{
+		m.allCells()[i].completeCell(m.allFaces());
+	}
+
+	std::cout << "Done" << std::endl;
+	
+	meshFile.close();
+}
+
+void fvMeshParser::readBoundariesFromFile(fvMesh& m)
+{
+	std::cout << "Reading boundaries..." << std::endl;
+
+	std::string file {"boundary"};
+        std::ifstream meshFile(m_fileDirectory+file);
+
+        if(!meshFile){
+                std::cerr << file << " file could not be opened" << std::endl;
+                exit(EXIT_FAILURE);
+	}
+
+	std::string trash;
+	while(std::getline(meshFile, trash) && !trash.empty());
+
+	int numBoundaryPatches;
+	std::string temp;
+	std::getline(meshFile, temp);
+	numBoundaryPatches = std::stoi(temp);
+
+	//skip the initial backet
+	std::getline(meshFile, temp);
+	// Loop over the number of patches skipping ( and )
+	for(int i=0;i<numBoundaryPatches;i++){
+		std::vector<int> faces;
+		int len;
+		std::string patchName;
+		for(int j=0;j<7;j++){
+			// Read next line
+			std::string line;
+			std::getline(meshFile, line);
+			std::istringstream iss(line);
+
+			switch (j) {
+				case 0: {
+					iss >> patchName;
+					break;
+				}
+				case 4: {
+					std::string item;
+					iss >> item;
+					std::cout << item <<std::endl;
+					if(item=="nFaces")
+					{
+						iss >> len;
+						faces.resize(len);
+					}
+					break;
+				}
+				case 5: {
+					int start;
+					std::string item;
+					iss >> item;
+					if(item=="startFace")
+					{
+						iss >> start;
+					}
+					for(int k=0;k<len;k++) iss >> faces[k];
+					BoundaryPatch bp = BoundaryPatch(start, len, patchName);
+					m.addBoundaryPatch(bp);
+					break;
+				}
+			}	
+		}
+	}
+
+	std::cout << "Done!" << std::endl;
+
+	meshFile.close();
+}
+

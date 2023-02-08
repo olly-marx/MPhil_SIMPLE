@@ -23,6 +23,12 @@ class Face{
 		void                 setOwner(int);
 		void                 setNeighbor(int);
 		void                 makeBoundaryFace(int);
+		bool                 isBoundary() const;
+
+		double               getfx() const;
+		void                 setfx(double fx);
+		double               getDelta() const;
+		void                 setDelta(double fx);
         private:
 		// Private member variables
 		int                  m_faceId;
@@ -33,6 +39,9 @@ class Face{
 		int                  m_neighbor;
 		bool                 m_isBoundary;
 		int                  m_boundaryPatchId;
+		
+		double               m_fx;
+		double               m_delta;
 
 		// Private members funtions
                 std::array<double,3> calcFaceCentroid(const std::vector<std::array<double,3>>&);

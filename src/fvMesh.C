@@ -1,5 +1,6 @@
 //AUTHOR:       Oliver Marx - ojm40@cam.ac.u/k
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -11,6 +12,12 @@
 #include "Face.H"
 #include "Cell.H"
 #include "VectorUtils.H"
+
+/* -------------------------------------------------------------------*/         
+/*                                                                    */         
+/*                    Mesh Initialization Methods                     */         
+/*                                                                    */         
+/* -------------------------------------------------------------------*/
 
 fvMesh::fvMesh(){
 	std::vector<std::array<double,3>> m_points;	
@@ -54,7 +61,104 @@ std::vector<Cell>& fvMesh::allCells(){
 	return m_cells;
 }
 
-std::string fvMesh::getMeshDetails(){
+std::array<int, 4> fvMesh::getMeshDetails(){
+	std::array<int, 4> details;
+	details[0] = m_points.size();
+	details[1] = m_faces.size();
+	details[2] = m_cells.size();
+	details[3] = m_boundaryPatches.size();
+	return details;
+}
+
+double fvMesh::cellVolume(int c){
+	return m_cells[c].getCellVolume();
+}
+
+std::array<double,3> fvMesh::faceAreaVector(int f){
+	return m_faces[f].getFaceAreaVector();
+}
+
+std::array<double,3> fvMesh::cellCentroid(int c){
+	return m_cells[c].getCellCentroid();
+}
+
+std::array<double,3> fvMesh::faceCentroid(int f){
+	return m_faces[f].getFaceCentroid();
+}
+
+std::vector<std::array<int,2>> fvMesh::boundaryFaceOwner(BoundaryPatch bp){
+	std::vector<std::array<int,2>> faceCellPairs;
+	for(int f=0;f<bp.getBoundaryPatchLength();f++)
+	{
+		faceCellPairs.push_back({m_faces[bp.getBoundaryPatchStartFace()+f].getFaceId()
+				, m_faces[bp.getBoundaryPatchStartFace()+f].getOwner()});
+	}
+	return faceCellPairs;
+}
+
+std::vector<int> fvMesh::cellNeighbors(int c){
+	std::vector<int> allCellNeighbors;
+	std::vector<int> cellFaces = m_cells[c].getCellFaceIndices();
+	for(unsigned int i=0;i<cellFaces.size();i++){
+		int owner = m_faces[cellFaces[i]].getOwner();
+		int neighbor = m_faces[cellFaces[i]].getNeighbor();
+		if(c==owner && neighbor>=0) allCellNeighbors.push_back(neighbor);
+		else if(c==neighbor) allCellNeighbors.push_back(owner);
+	}
+	return allCellNeighbors;
+}
+
+std::array<int,2> fvMesh::faceOwnerNeighbor(int f)
+{
+	return {m_faces[f].getOwner(), m_faces[f].getNeighbor()};
+}
+
+void fvMesh::calculateFaceCellDistanceRatios()
+{
+	for(std::size_t i=0;i<m_faces.size();i++)
+	{
+		Face& f = m_faces[i];
+		double fx;
+
+		const Cell& c = m_cells[f.getOwner()];
+
+		if(!f.isBoundary())
+		{
+			const Cell& n = m_cells[f.getNeighbor()];
+			
+			fx = mod( diff( m_faces[i].getFaceCentroid() , n.getCellCentroid() ) ) /
+				mod( diff( n.getCellCentroid() , c.getCellCentroid() ) );
+
+			f.setfx(fx);
+		}
+	}
+} 
+
+void fvMesh::calculateFaceDeltaCoeffs()
+{
+	for(std::size_t i=0;i<m_faces.size();i++)
+	{
+		Face& f = m_faces[i];
+		double delta;
+
+		const Cell& c = m_cells[f.getOwner()];
+
+		if(f.isBoundary())
+		{
+			delta = 1.0 / mod( diff( f.getFaceCentroid() , c.getCellCentroid() ) );
+		}
+		else
+		{
+			const Cell& n = m_cells[f.getNeighbor()];
+			
+			delta = 1.0 / mod( diff( n.getCellCentroid() , c.getCellCentroid() ) );
+
+			f.setDelta(delta);
+		}
+	}
+} 
+
+std::string fvMesh::displayMeshDetails(){
 	std::string out = "fvMesh Details:\n";
 	
 	out += "# Points: " + std::to_string(m_points.size()) +" \n";
@@ -65,7 +169,7 @@ std::string fvMesh::getMeshDetails(){
 }
 
 std::string fvMesh::displayCentroids(){
-	std::string out = "Cell Volumes: \n";
+	std::string out = "Cell Centroids: \n";
 	for(Cell c : m_cells) out += std::to_string(c.getCellId()) + " " 
 		+ std::to_string(c.getCellCentroid()[0]) + " " 
 		+ std::to_string(c.getCellCentroid()[1]) + " " 
@@ -92,9 +196,8 @@ std::string fvMesh::displayBoundaryFaces(){
 	std::string out = "Boundary Faces (by patch)\n";
 	for(BoundaryPatch bp : m_boundaryPatches){
 		out+=bp.getBoundaryPatchName() + "\n";
-		std::vector<int> patchFaces = bp.getBoundaryFaceIndices();
-		for(unsigned int i=0;i<bp.getBoundaryFaceIndices().size();i++){
-			Face f = m_faces[patchFaces[i]];
+		for(int i=0;i<bp.getBoundaryPatchLength();i++){
+			Face f = m_faces[bp.getBoundaryPatchStartFace()+i];
 			out += std::to_string(f.getFaceId()) + " : Owner " + std::to_string(f.getOwner()) + "\n";
 		}
 	}

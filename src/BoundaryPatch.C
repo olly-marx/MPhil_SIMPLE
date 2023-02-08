@@ -9,30 +9,25 @@
 #include "BoundaryPatch.H"
 
 // Constructor
-BoundaryPatch::BoundaryPatch(const std::vector<Face>& faceArr, std::vector<int> patchFaceIndices, std::string patchName){
+BoundaryPatch::BoundaryPatch(int startFace, int length, std::string patchName)
+{
 	m_boundaryPatchName = patchName;
-	
-	m_boundaryFaces = patchFaceIndices;
-
-	for(unsigned int i=0;i<patchFaceIndices.size();i++){
-		Face b = faceArr[patchFaceIndices[i]];
-		int faceOwner = b.getOwner();
-		int faceNeighbor = b.getNeighbor();
-
-		if(faceOwner==-1 && faceNeighbor>=0){
-			b.setOwner(faceNeighbor);
-			// For now have a special case where the cell index for
-			// a boundary is -1
-			b.setNeighbor(-1);
-		}
-	}
+	m_startFace = startFace;
+	m_length = length;
 }
 
 // Public member functions
-std::string BoundaryPatch::getBoundaryPatchName(){
+std::string BoundaryPatch::getBoundaryPatchName() const
+{
 	return m_boundaryPatchName;
 }
 
-std::vector<int> BoundaryPatch::getBoundaryFaceIndices(){
-	return m_boundaryFaces;
+int BoundaryPatch::getBoundaryPatchStartFace() const
+{
+	return m_startFace;
+}
+
+int BoundaryPatch::getBoundaryPatchLength() const
+{
+	return m_length;
 }

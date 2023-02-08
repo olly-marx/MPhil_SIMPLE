@@ -1,6 +1,5 @@
 CC = c++
-CFLAGS = -std=c++17 -Wpedantic -Wall -Wextra
-REFFLAGS= -Wshadow -Wnon-virtual-dtor \
+CFLAGS = -std=c++17 -Wpedantic -Wall -Wextra -Wshadow -Wnon-virtual-dtor \
 	  -Wold-style-cast -Wcast-align -Wuseless-cast -Wsign-conversion \
 	  -Wdouble-promotion -Wnull-dereference -Wmisleading-indentation \
 	  -Wduplicated-cond -Wformat=2

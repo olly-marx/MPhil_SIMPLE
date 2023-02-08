@@ -13,13 +13,16 @@
 class Cell{
         public:
 		// Constructor
-                Cell(std::vector<Face>&, std::vector<int>, int);
+                Cell(std::vector<int>, int);
 
 		// Public member functions
-                std::vector<int>     getCellFaceIndices();
+                std::vector<int>     getCellFaceIndices() const;
 		std::array<double,3> getCellCentroid() const;
 		double               getCellVolume() const;
 		int                  getCellId();
+		
+		void addNeighborFace(int);
+		void completeCell(const std::vector<Face>&);
 
         private:
 		// Private member variables
