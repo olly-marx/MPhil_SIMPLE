@@ -31,3 +31,23 @@ int BoundaryPatch::getBoundaryPatchLength() const
 {
 	return m_length;
 }
+
+patch BoundaryPatch::getBoundaryPatchType() const
+{
+	return m_type;
+}
+
+double BoundaryPatch::getBoundaryPatchValue() const
+{
+	return m_value;
+}
+
+void BoundaryPatch::setType(patch p)
+{
+	m_type = p;
+}
+
+void BoundaryPatch::setValue(double v)
+{
+	m_value = v;
+}

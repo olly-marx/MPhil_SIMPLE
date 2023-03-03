@@ -8,7 +8,7 @@
 
 #include "VectorUtils.H"
 
-std::array<double,3> cross(std::array<double,3> a, std::array<double,3> b){
+std::array<double,3> cross(const std::array<double,3>& a, const std::array<double,3>& b){
 	std::array<double,3> result = {0.0, 0.0, 0.0};
 	result[0]=   (a[1]*b[2] - a[2]*b[1]);
 	result[1]= - (a[0]*b[2] - a[2]*b[0]);
@@ -16,21 +16,33 @@ std::array<double,3> cross(std::array<double,3> a, std::array<double,3> b){
 	return result;
 }
 
-std::array<double,3> sum(std::array<double,3> a, std::array<double,3> b){
+std::array<double,3> operator+(const std::array<double,3>& a, const std::array<double,3>& b){
 	std::array<double,3> result = {0.0, 0.0, 0.0};
 	for(int i=0;i<3;i++) result[i] = a[i] + b[i];
 	return result;
 }
 
-std::array<double,3> diff(std::array<double,3> a, std::array<double,3> b){
+std::array<double,3> operator-(const std::array<double,3>& a, const std::array<double,3>& b){
 	std::array<double,3> result = {0.0, 0.0, 0.0};
 	for(int i=0;i<3;i++) result[i] = a[i] - b[i];
 	return result;
 }
 
-std::array<double,3> scalarMult(double a, std::array<double,3> b){
-	for(int i=0;i<3;i++) b[i] = a*b[i];
-	return b;
+std::array<double,3> operator*(const double& a,  const std::array<double,3>& b){
+	std::array<double,3> result = {0.0, 0.0, 0.0};
+	for(int i=0;i<3;i++) result[i] = a*b[i];
+	return result;
+}
+
+std::array<double,3> operator*(const std::array<double,3>& b, const double& a){
+	std::array<double,3> result = {0.0, 0.0, 0.0};
+	for(int i=0;i<3;i++) result[i] = a*b[i];
+	return result;
+}
+
+bool operator==(const std::array<double,3>& a, const std::array<double,3>& b)
+{
+	return a[0]==b[0] && a[1]==b[1] && a[2]==b[2];
 }
 
 double dot(std::array<double,3> a, std::array<double,3> b){

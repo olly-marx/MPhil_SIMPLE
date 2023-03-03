@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 
+#include "BoundaryPatch.H"
 #include "fvMesh.H"
 #include "Face.H"
 #include "Cell.H"
@@ -59,6 +60,37 @@ std::vector<Face>& fvMesh::allFaces(){
 
 std::vector<Cell>& fvMesh::allCells(){
 	return m_cells;
+}
+
+std::vector<BoundaryPatch>& fvMesh::allBPs(){
+	return m_boundaryPatches;
+}
+
+void fvMesh::copyT(arma::vec& T) const
+{
+	for(unsigned int i=0;i<m_cells.size();i++)
+	{
+		T(i) = m_cells[i].getT();
+	}
+}
+
+void fvMesh::mergeT(arma::vec& T)
+{
+	for(unsigned int i=0;i<m_cells.size();i++)
+	{
+		m_cells[i].setT(T(i));
+	}
+}
+
+void fvMesh::copyX(arma::mat& X) const
+{
+	for(unsigned int i=0;i<m_cells.size();i++)
+	{
+		for(int n=0;n<3;n++)
+		{
+			X(i,n) = m_cells[i].getCellCentroid()[n];
+		}
+	}
 }
 
 std::array<int, 4> fvMesh::getMeshDetails(){
@@ -126,8 +158,8 @@ void fvMesh::calculateFaceCellDistanceRatios()
 		{
 			const Cell& n = m_cells[f.getNeighbor()];
 			
-			fx = mod( diff( m_faces[i].getFaceCentroid() , n.getCellCentroid() ) ) /
-				mod( diff( n.getCellCentroid() , c.getCellCentroid() ) );
+			fx = mod( m_faces[i].getFaceCentroid() - n.getCellCentroid() ) /
+				mod( n.getCellCentroid() - c.getCellCentroid() );
 
 			f.setfx(fx);
 		}
@@ -145,13 +177,15 @@ void fvMesh::calculateFaceDeltaCoeffs()
 
 		if(f.isBoundary())
 		{
-			delta = 1.0 / mod( diff( f.getFaceCentroid() , c.getCellCentroid() ) );
+			delta = 1.0 / mod( f.getFaceCentroid() - c.getCellCentroid() );
+
+			f.setDelta(delta);
 		}
 		else
 		{
 			const Cell& n = m_cells[f.getNeighbor()];
 			
-			delta = 1.0 / mod( diff( n.getCellCentroid() , c.getCellCentroid() ) );
+			delta = 1.0 / mod( n.getCellCentroid() - c.getCellCentroid() );
 
 			f.setDelta(delta);
 		}
@@ -176,7 +210,7 @@ std::string fvMesh::displayCentroids(){
 		+ std::to_string(c.getCellCentroid()[2]) + "\n";
 	out += "\nFace Centroids:\n";
 	for(Face f : m_faces) out += std::to_string(f.getFaceId()) + " " 
-		+ printV(f.getFaceAreaVector()) + std::to_string(f.getOwner()) + " " 
+		+ printV(f.getFaceCentroid()) + std::to_string(f.getOwner()) + " " 
 		+ std::to_string(f.getNeighbor()) + "\n";
 	return out;
 }

@@ -16,6 +16,8 @@ Cell::Cell(std::vector<int> indices, int cellId){
 	m_cellId = cellId;
 
         m_faces = indices;
+
+	T=0.0, p=0.0;
 }
 
 // Return vector of points forming face
@@ -36,6 +38,26 @@ double Cell::getCellVolume() const{
 
 int Cell::getCellId(){
 	return m_cellId;
+}
+
+double Cell::getT() const
+{
+	return T;
+}
+
+void Cell::setT(double _T)
+{
+	T = _T;
+}
+
+double Cell::getP() const
+{
+	return p;
+}
+
+void Cell::setP(double _p)
+{
+	p = _p;
 }
 
 void Cell::addNeighborFace(int faceId)
@@ -60,11 +82,11 @@ std::array<double,3> Cell::calcCellCentroid(const std::vector<Face> &faceArr){
         for(int i : m_faces){
 
                 // Add current point to result
-		result = sum(result, faceArr[i].getFaceCentroid());
+		result = result + faceArr[i].getFaceCentroid();
         }
 
         // divide by number of points in face to take average
-        result = scalarMult(1.0/m_faces.size(), result);
+        result = (1.0/m_faces.size()) * result;
 
         return result;
 }
@@ -76,7 +98,7 @@ double Cell::calcCellVolume(const std::vector<Face> &faceArr){
 	
 	for(unsigned int i=0;i<m_faces.size();i++){
 		Face f = faceArr[m_faces[i]];
-		result += mod ( scalarMult ( mod( f.getFaceAreaVector() ) , diff( f.getFaceCentroid() , m_cellCentroid ) ) );
+		result += mod ( mod( f.getFaceAreaVector() ) * ( f.getFaceCentroid() - m_cellCentroid ) );
 	}
         return result / 3;
 }

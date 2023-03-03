@@ -8,10 +8,11 @@
 #include <string>
 #include <vector>
 
-std::array<double,3> cross(std::array<double,3>, std::array<double,3>);
-std::array<double,3> sum(std::array<double,3>, std::array<double,3>);
-std::array<double,3> diff(std::array<double,3>, std::array<double,3>);
-std::array<double,3> scalarMult(double, std::array<double,3>);
+std::array<double,3> cross(const std::array<double,3>&, const std::array<double,3>&);
+std::array<double,3> operator+(const std::array<double,3>&, const std::array<double,3>&);
+std::array<double,3> operator-(const std::array<double,3>&, const std::array<double,3>&);
+std::array<double,3> operator*(const double&, const std::array<double,3>&);
+std::array<double,3> operator*(const std::array<double,3>&, const double&);
 double               dot(std::array<double,3>, std::array<double,3>);
 double               mod(std::array<double,3>);
 std::string          printV(std::array<double,3>);

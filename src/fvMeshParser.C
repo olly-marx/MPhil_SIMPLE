@@ -9,6 +9,7 @@
 #include <vector>
 #include <sstream>
 
+#include "VectorUtils.H"
 #include "fvMesh.H"
 #include "fvMeshParser.H"
 
@@ -126,13 +127,16 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 	while(std::getline(meshFile, trash) && !trash.empty());
 	std::getline(meshFile, trash);
 
+	// Get the number of faces in owner file
 	int numFaces;
 	std::string temp;
 	std::getline(meshFile, temp);
 	numFaces = std::stoi(temp);
 
+	// The highest cell owner index is also the number of cell in domain -1
 	std::vector<int> owners;
 	int numCells = 0;
+	// For each cell store the faces attached to the cell
 	std::vector<std::vector<int>> cellsfaces;
 
 	// Loop over the number of cells skipping ( and )
@@ -144,16 +148,20 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 		// Skip the first and last lines because of the parenthesis
 		if(i>0 && i<numFaces+1)
 		{
-			// Read point data into triplet
+			// Read next face owner index
 			int cellId = std::stoi(line);
 
+			// push owner owners array
 			owners.push_back(cellId);
 
+			// check if the index is largest and set num Cells
+			// accordingly
 			if(cellId > numCells)
 			{
 				numCells = cellId;
 			}
 
+			// Set current face owner
 			m.allFaces()[i-1].setOwner(cellId);
 		}
 	}
@@ -164,8 +172,12 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 
 	cellsfaces.resize(numCells+1);
 
+	// push faces owned by cells onto cell face array
+	// here j is the face number
 	for(std::size_t j=0;j<owners.size();j++)
 	{
+		// depending on cell index stored in owners push j onto the
+		// cell's face array
 		cellsfaces[owners[j]].push_back(j);
 	}
 
@@ -203,6 +215,7 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 			int cellId = std::stoi(line);
 
 			m.allFaces()[i-1].setNeighbor(cellId);
+			m.allFaces()[i-1].makeInternalFace();
 
 			m.allCells()[cellId].addNeighborFace(i-1);
 		}
@@ -259,7 +272,6 @@ void fvMeshParser::readBoundariesFromFile(fvMesh& m)
 				case 4: {
 					std::string item;
 					iss >> item;
-					std::cout << item <<std::endl;
 					if(item=="nFaces")
 					{
 						iss >> len;

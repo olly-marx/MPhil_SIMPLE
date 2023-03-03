@@ -22,7 +22,7 @@ class Face{
 		int                  getNeighbor() const;
 		void                 setOwner(int);
 		void                 setNeighbor(int);
-		void                 makeBoundaryFace(int);
+		void                 makeInternalFace();
 		bool                 isBoundary() const;
 
 		double               getfx() const;
@@ -44,8 +44,8 @@ class Face{
 		double               m_delta;
 
 		// Private members funtions
-                std::array<double,3> calcFaceCentroid(const std::vector<std::array<double,3>>&);
-                std::array<double,3> calcFaceAreaVector(const std::vector<std::array<double,3>>&);
+                void                 calcFaceCentroid(const std::vector<std::array<double,3>>&);
+                void                 calcFaceAreaVector(const std::vector<std::array<double,3>>&);
 };
 
 #endif

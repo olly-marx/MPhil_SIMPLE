@@ -14,15 +14,15 @@ Face::Face(const std::vector<std::array<double,3>> &points, std::vector<int> ind
 	m_owner = -1;
 	m_neighbor = -1;
         m_vertices = indices;
-	m_isBoundary = false;
+	m_isBoundary = true;
 	m_boundaryPatchId = -1;
 
         //Implement face centroid calculation
-        m_faceCentroid = calcFaceCentroid(points);
+        calcFaceCentroid(points);
 	//std::cout << m_faceCentroid[0] << " " << m_faceCentroid[1] << " " << m_faceCentroid[2] << std::endl;
 
         //Implement tesselation calc
-        m_faceAreaVector = calcFaceAreaVector(points);
+        calcFaceAreaVector(points);
 	//std::cout << m_faceId << " " << m_faceAreaVector[0] << " " << m_faceAreaVector[1] << " " << m_faceAreaVector[2] << std::endl;
 }
 
@@ -66,33 +66,33 @@ void Face::setNeighbor(int n){
 	m_neighbor = n;
 }
 
-void Face::makeBoundaryFace(int boundaryPatchId){
-	m_isBoundary = true;
-	m_boundaryPatchId = boundaryPatchId;
+void Face::makeInternalFace(){
+	m_isBoundary = false;
 }
 
 // Algorithm to take points defining face and calculate position of face
 // centroid in 3D
 // Defined as the vector average of the points defining a faces
-std::array<double,3> Face::calcFaceCentroid(const std::vector<std::array<double,3>> &points){
-
+void Face::calcFaceCentroid(const std::vector<std::array<double,3>> &points)
+{
         // Init empty result array
         std::array<double,3> result = {0.0, 0.0, 0.0};
         // Loop over points of face
-        for(int i : m_vertices){
+        for(unsigned int i=0;i<m_vertices.size();i++){
 
                 // Add current point to result
-		result = sum(result, points[i]);
+		result = result + points[m_vertices[i]];
         }
 
         // divide by number of points in face to take average
-        result = scalarMult(1.0/m_vertices.size(), result);
+        result = (1.0/4.0) * result;
 
-        return result;
+        m_faceCentroid = result;
 }
 
 // Algorithm to tesselate face points and calculate face area
-std::array<double,3> Face::calcFaceAreaVector(const std::vector<std::array<double, 3>> &points){
+void Face::calcFaceAreaVector(const std::vector<std::array<double, 3>> &points)
+{
         //Init empty result array
         std::array<double,3> result = {0.0, 0.0, 0.0};
 
@@ -114,13 +114,13 @@ std::array<double,3> Face::calcFaceAreaVector(const std::vector<std::array<doubl
 
                 // Vector differences to set up cross product
                 std::array<double,3> vector1, vector2;
-		vector1 = diff(p2, p);
-		vector2 = diff(p2, m_faceCentroid);
+		vector1 = p - p2;
+		vector2 = m_faceCentroid - p2;
 
                 // take the cross product * 0.5 to get area of each triangle
-		result = sum( result , cross(vector1, vector2) );
+		result = result - cross(vector1, vector2);
         }
-        return scalarMult(0.5, result);
+        m_faceAreaVector = 0.5 * result;
 }
 
 double Face::getfx() const

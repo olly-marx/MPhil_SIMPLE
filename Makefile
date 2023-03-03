@@ -1,10 +1,10 @@
 CC = c++
 CFLAGS = -std=c++17 -Wpedantic -Wall -Wextra -Wshadow -Wnon-virtual-dtor \
-	  -Wold-style-cast -Wcast-align -Wuseless-cast -Wsign-conversion \
+	  -Wold-style-cast -Wcast-align -Wuseless-cast \
 	  -Wdouble-promotion -Wnull-dereference -Wmisleading-indentation \
-	  -Wduplicated-cond -Wformat=2
+	  -O2
+LIBFLAGS = -larmadillo -lconfig++
 DBGFLAGS = -g -O0 -fsanitize=address -fsanitize=bounds -lubsan
-OPTFLAG = -O2
 
 BIN = ./bin
 SRC = ./src
@@ -19,28 +19,54 @@ SRCS = $(wildcard $(SRC)/*.C)
 OBJS = $(patsubst $(SRC)/%.C, $(OBJ)/%.o, $(SRCS))
 INCDIRS = -I./ $(addprefix -I, $(SRC))
 
+PHONY := $(TARGET)
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBFLAGS)
 
 $(OBJ)/%.o: $(SRC)/%.C $(INCS)
 	$(CC) $(CFLAGS) -o $@ -c $< $(INC_DIRS)
 
-$(OBJ)/%.o: $(SRC)/%.C $(INCS)
-	$(CC) $(CFLAGS) -o $@ -c $< $(INC_DIRS)
+PHONY += debug
+debug: 
+	CFLAGS += $(DBGFLAGS)
+	$(TARGET)
 
-debug: CFLAGS += $(DBGFLAGS)
-debug : $(TARGET)
+PHONY += release
+release: 
+	CFLAGS += $(OPTFLAG)
+	$(TARGET)
 
-release: CFLAGS += $(OPTFLAG)
-release: $(TARGET)
+PHONY += refactor
+refactor: 
+	CFLAGS += $(REFFLAGS)
+	$(TARGET)
 
-refactor: CFLAGS += $(REFFLAGS)
-refactor: $(TARGET)
+PHONY += plotGifs
+FINDDATS = $(wildcard $(DAT)/*.dat)
+RMSUFFIX := $(patsubst %.dat, %, $(FINDDATS))
+RMDIR := $(patsubst ./dat/%, %, $(RMSUFFIX))
+plotGifs:
+	for filename in $(RMDIR) ; do \
+		gnuplot -e "filename='$$filename'" ./plotGif.plt ; \
+	done
 
-run: $(TARGET)
+PHONY += plot2D
+FINDDATS = $(wildcard $(DAT)/*.dat)
+RMSUFFIX := $(patsubst %.dat, %, $(FINDDATS))
+RMDIR := $(patsubst ./dat/%, %, $(RMSUFFIX))
+plot2D:
+	for filename in $(RMDIR) ; do \
+		gnuplot -e "filename='$$filename'" ./plot2D.plt ; \
+	done
 
-.PHONY: clean
+PHONY += clean
 clean:
 	rm $(OBJ)/*.o
 	rm $(BIN)/*
 
+PHONY += cleanresults
+cleanresults:
+	rm $(DAT)/*.dat
+	rm *.gif
+
+.PHONY: $(PHONY)

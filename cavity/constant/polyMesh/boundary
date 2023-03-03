@@ -14,21 +14,49 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-2
+6
 (
-    emptyWalls
+    front
     {
-        type            wall;
-        inGroups        List<word> 1(wall);
-        nFaces          400;
-        startFace       99;
+        type            empty;
+        inGroups        List<word> 1(empty);
+        nFaces          6300;
+        startFace       12279;
     }
-    ends
+    back
+    {
+        type            empty;
+        inGroups        List<word> 1(empty);
+        nFaces          6300;
+        startFace       18579;
+    }
+    top
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          2;
-        startFace       499;
+        nFaces          300;
+        startFace       24879;
+    }
+    bottom
+    {
+        type            wall;
+        inGroups        List<word> 1(wall);
+        nFaces          300;
+        startFace       25179;
+    }
+    left
+    {
+        type            wall;
+        inGroups        List<word> 1(wall);
+        nFaces          21;
+        startFace       25479;
+    }
+    right
+    {
+        type            wall;
+        inGroups        List<word> 1(wall);
+        nFaces          21;
+        startFace       25500;
     }
 )
 

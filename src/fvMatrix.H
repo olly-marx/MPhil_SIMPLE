@@ -7,6 +7,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <armadillo>
 
 #include "Cell.H"
 #include "BoundaryPatch.H"
@@ -17,25 +18,38 @@ class fvMatrix{
                 fvMatrix(int);
 
 		// Public member functions
-		static void discretizeRateofChange(fvMatrix&, const std::vector<double>&,
+		static void discretizeRateofChange(fvMatrix&, const arma::vec& T,
 				const std::vector<Cell>&, const double&);
 
-		static void discretizeDiffusion(fvMatrix&, const std::vector<double>&,
+		static void discretizeDiffusion(fvMatrix&, const arma::vec& gamma,
 				const std::vector<Face>&);
 
-		static void discretizeDirichlet(fvMatrix& m, const std::vector<double>& T,
-				const std::vector<BoundaryPatch>& bpArr, const std::vector<Face>& faceArr,
-				const double& Tb);
+		static void discretizeBoundaryConditions(fvMatrix& m, const arma::vec& T,
+				const std::vector<BoundaryPatch>& bpArr, const arma::vec& gamma,
+				const arma::mat& u, const std::vector<Face>& faceArr);
 
-		std::vector<double>& operator[](int);
-		std::vector<double>  operator[](int) const;
+		static void discretizeConvectionUpwind(fvMatrix&, const arma::mat& u,
+				const std::vector<Face>&);
+
+		static void discretizeConvectionCentral(fvMatrix&, const arma::mat& u,
+				const std::vector<Face>&);
+
+		static void resetMatrix(fvMatrix&, const std::vector<Cell>&);
+
+		// Member function solver
+		void solveLinearSystem(arma::Col<double>&);
+
+		void printDiscretization();
+
+		double& A(int, int);
+		double A(int, int) const;
 
 		double& b(int);
 		double  b(int) const;
         private:
 		// Private member variables
-		std::vector<std::vector<double>> m_a;
-		std::vector<double>              m_b;
+		arma::Mat<double> m_A;
+		arma::Col<double> m_b;
 };
 
 #endif
