@@ -166,6 +166,8 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 		}
 	}
 
+	m.setNCells(numCells+1);
+
 	std::cout << "Done!" << std::endl;
 
 	meshFile.close();
@@ -202,6 +204,8 @@ void fvMeshParser::readCellsFromFile(fvMesh& m)
 
 	std::getline(meshFile, temp);
 	numFaces = std::stoi(temp);
+
+	m.setNInternalFaces(numFaces);
 
 	// Loop over the number of internal faces skipping ( and )
 	for(int i=0;i<numFaces+2;i++){

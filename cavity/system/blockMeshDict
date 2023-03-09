@@ -16,15 +16,15 @@ FoamFile
 convertToMeters 1;
 
 xmin 0.0;
-xmax 300;
+xmax 0.1;
 ymin 0.0;
-ymax 10.5;
+ymax 0.1;
 zmin 0.0;
-zmax 0.01;
+zmax 0.025;
 
-deltax 1.0;
-deltay 0.5;
-deltaz 0.01;
+deltax 0.025;
+deltay 0.025;
+deltaz 0.025;
 
 xLen #calc "$xmax - $xmin";
 yLen #calc "$ymax - $ymin";

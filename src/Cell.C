@@ -16,8 +16,6 @@ Cell::Cell(std::vector<int> indices, int cellId){
 	m_cellId = cellId;
 
         m_faces = indices;
-
-	T=0.0, p=0.0;
 }
 
 // Return vector of points forming face
@@ -38,26 +36,6 @@ double Cell::getCellVolume() const{
 
 int Cell::getCellId(){
 	return m_cellId;
-}
-
-double Cell::getT() const
-{
-	return T;
-}
-
-void Cell::setT(double _T)
-{
-	T = _T;
-}
-
-double Cell::getP() const
-{
-	return p;
-}
-
-void Cell::setP(double _p)
-{
-	p = _p;
 }
 
 void Cell::addNeighborFace(int faceId)

@@ -20,11 +20,6 @@ class Cell{
 		std::array<double,3> getCellCentroid() const;
 		double               getCellVolume() const;
 		int                  getCellId();
-
-		double               getT() const;
-		void                 setT(double);
-		double               getP() const;
-		void                 setP(double);
 		
 		void addNeighborFace(int);
 		void completeCell(const std::vector<Face>&);
@@ -35,9 +30,6 @@ class Cell{
                 std::array<double,3> m_cellCentroid;
                 double               m_cellVolume;
 		int                  m_cellId;
-		
-		double               T;
-		double               p;
 
 		// Private member functions
                 std::array<double,3> calcCellCentroid(const std::vector<Face>&);

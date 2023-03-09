@@ -11,45 +11,58 @@
 
 #include "Cell.H"
 #include "BoundaryPatch.H"
+#include "fvMesh.H"
 
 class fvMatrix{
         public:
 		// Constructor
-                fvMatrix(int);
+                fvMatrix(fvMesh&);
 
 		// Public member functions
-		static void discretizeRateofChange(fvMatrix&, const arma::vec& T,
-				const std::vector<Cell>&, const double&);
+		static void discretizeRateofChange(fvMatrix&, const std::array<arma::vec,2>& T,
+				fvMesh&, const double&);
 
-		static void discretizeDiffusion(fvMatrix&, const arma::vec& gamma,
-				const std::vector<Face>&);
+		static void discretizeLaplacian(fvMatrix&, const arma::vec& gamma,
+				fvMesh&, bool plus);
 
-		static void discretizeBoundaryConditions(fvMatrix& m, const arma::vec& T,
-				const std::vector<BoundaryPatch>& bpArr, const arma::vec& gamma,
-				const arma::mat& u, const std::vector<Face>& faceArr);
+		static void discretizeConvectionUpwind(fvMatrix& m, fvMesh& thisMesh,
+				const arma::vec& F, std::array<arma::vec,2>& T);
 
-		static void discretizeConvectionUpwind(fvMatrix&, const arma::mat& u,
-				const std::vector<Face>&);
+		static void implicitUnderRelax(fvMatrix& m, std::array<arma::vec,2>& u, fvMesh& thisMesh,
+				double alphaU);
 
-		static void discretizeConvectionCentral(fvMatrix&, const arma::mat& u,
-				const std::vector<Face>&);
+		static void discretizeContinuity(fvMatrix& m, fvMesh& thisMesh, 
+				const arma::vec& F);
 
-		static void resetMatrix(fvMatrix&, const std::vector<Cell>&);
+		static void calculateUResidual(arma::vec& res, fvMatrix& m,
+				arma::vec& x, fvMesh& thisMesh, double& norm);
+
+		static void resetMatrix(fvMatrix&, int nCells);
 
 		// Member function solver
-		void solveLinearSystem(arma::Col<double>&);
+		void solveLinearSystem(arma::Col<double>&, bool);
+		arma::vec recipD() const;
 
 		void printDiscretization();
 
 		double& A(int, int);
 		double A(int, int) const;
 
-		double& b(int);
-		double  b(int) const;
+		double& bx(int);
+		double  bx(int) const;
+
+		double& by(int);
+		double  by(int) const;
         private:
 		// Private member variables
-		arma::Mat<double> m_A;
-		arma::Col<double> m_b;
+		int nCells;
+		arma::mat m_A;
+		arma::vec m_bx;
+		arma::vec m_by;
+
+		//arma::sp_mat m_D;
+		//arma::sp_mat m_U;
+		//arma::sp_mat m_L;
 };
 
 #endif

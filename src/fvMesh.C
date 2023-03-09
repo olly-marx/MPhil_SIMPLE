@@ -66,22 +66,6 @@ std::vector<BoundaryPatch>& fvMesh::allBPs(){
 	return m_boundaryPatches;
 }
 
-void fvMesh::copyT(arma::vec& T) const
-{
-	for(unsigned int i=0;i<m_cells.size();i++)
-	{
-		T(i) = m_cells[i].getT();
-	}
-}
-
-void fvMesh::mergeT(arma::vec& T)
-{
-	for(unsigned int i=0;i<m_cells.size();i++)
-	{
-		m_cells[i].setT(T(i));
-	}
-}
-
 void fvMesh::copyX(arma::mat& X) const
 {
 	for(unsigned int i=0;i<m_cells.size();i++)
@@ -91,6 +75,26 @@ void fvMesh::copyX(arma::mat& X) const
 			X(i,n) = m_cells[i].getCellCentroid()[n];
 		}
 	}
+}
+
+int fvMesh::getNInternalFaces() const
+{
+	return m_internalFaces;
+}
+
+void fvMesh::setNInternalFaces(int n)
+{
+	m_internalFaces = n;
+}
+
+int fvMesh::getNCells() const
+{
+	return m_nCells;
+}
+
+void fvMesh::setNCells(int n)
+{
+	m_nCells = n;
 }
 
 std::array<int, 4> fvMesh::getMeshDetails(){

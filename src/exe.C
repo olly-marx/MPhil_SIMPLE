@@ -1,5 +1,6 @@
 //AUTHOR:       Oliver Marx - ojm40@cam.ac.u/k
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -19,162 +20,9 @@
 #include "fvMatrix.H"
 #include "fvMesh.H"
 #include "fvMeshParser.H"
+#include "fvSimulation.H"
+#include "VectorUtils.H"
 
-void outputState(std::ofstream& file, arma::mat x, arma::vec T)
-{
-	for(unsigned int i=0;i<T.size();i++)
-	{
-		file << x(i,0) << " "
-		     << x(i,1) << " "
-		     << T(i) << " "
-		     << std::endl;
-		if((i+1)%300==0)
-			file << "\n";
-	}
-	file << "\n\n";
-}
-
-void initializeState(arma::vec& T, arma::vec& gamma, arma::vec& S,
-		arma::mat& u, int& tRes, fvMesh& thisMesh, int testNum)
-{
-	const char* configFileName = "./stg/config.cfg";
-	libconfig::Config cfg;
-	
-	try{
-		cfg.readFile(configFileName);
-	}
-	catch(const libconfig::FileIOException &fioex){
-		std::cerr << "I/O error while reading file." << std::endl;
-	}
-	catch (libconfig::ParseException &e){
-        /*inform user about the parse exception*/
-        std::cerr << "Parse error at " << e.getFile() << ":" << e.getLine()
-                  << " - " << e.getError() << std::endl;
-	}
-	
-	const libconfig::Setting& root = cfg.getRoot();
-
-	try{
-		const libconfig::Setting& tests = root["simulation"]["tests"];
-		const libconfig::Setting& test = tests[testNum];
-
-		double T0, gamma0, ux, uy, uz;
-
-		if(!(test.lookupValue("T0", T0)
-			&& test.lookupValue("gamma0", gamma0)
-			&& test.lookupValue("ux", ux)
-			&& test.lookupValue("uy", uy)
-			&& test.lookupValue("uz", uz)
-			&& test.lookupValue("tRes", tRes)))
-			std::cout << "Settings for test " << testNum+1 << " read in."
-				<< std::endl;
-
-	unsigned int nCells = gamma.size();
-
-	for(unsigned int i=0;i<nCells;i++)
-	{
-		if(thisMesh.allCells()[i].getCellCentroid()[0]<=150.0)
-			T(i)     = T0;
-		else
-			T(i)     = T0+1;
-		gamma(i) = gamma0;
-		u(i,0)   = ux;
-		u(i,1)   = uy;
-		u(i,2)   = uz;
-	}
-
-	// Initialize Boundary Conditions from settings
-	const libconfig::Setting& boundaries = tests[testNum]["inits"];
-
-	int count = boundaries.getLength();
-
-	for(int n=0;n<count;n++)
-	{
-		const libconfig::Setting& boundary = boundaries[n];
-		std::string bpname;
-		int type;
-		patch p;
-		double value;
-
-		if(!(
-			boundary.lookupValue("patch", bpname)
-			&& boundary.lookupValue("type", type)
-			&& boundary.lookupValue("value", value)
-		    ))
-			continue;
-
-		switch (type)
-		{
-			case 1 :
-			{
-				p = fixedValue;
-				break;
-			}
-			case 2 : 
-			{
-				p = fixedGrad;
-				break;
-			}
-			case 3 :
-			{
-				p = empty;
-				break;
-			}
-			case 4 :
-			{
-				p = mixed;
-				break;
-			}
-		}
-
-		std::vector<BoundaryPatch>& bpArr = thisMesh.allBPs();
-
-		for(unsigned int n=0;n<bpArr.size();n++)
-		{
-			if(bpArr[n].getBoundaryPatchName()==bpname)
-			{
-				bpArr[n].setType(p);
-				bpArr[n].setValue(value);
-				break;
-			}
-		}
-	}
-
-	const libconfig::Setting& sources = tests[testNum]["sources"];
-
-	count = sources.getLength();
-
-	for(int n=0;n<count;n++)
-	{
-		const libconfig::Setting& source = sources[n];
-		std::array<double,3> pos;
-		double value;
-		double px, py, pz;
-
-		if(!(
-			source.lookupValue("px", px)
-			&& source.lookupValue("py", py)
-			&& source.lookupValue("pz", pz)
-			&& source.lookupValue("value", value)
-		    ))
-			continue;
-		pos = {px, py, pz};
-
-		std::vector<Face> faceArr = thisMesh.allFaces();
-		for(unsigned int i=0;i<faceArr.size();i++)
-		{
-			if(pos==faceArr[i].getFaceCentroid())
-				S[faceArr[i].getOwner()] = value;
-		}
-	}
-
-
-
-	} catch(const libconfig::SettingNotFoundException &nfex){
-		//Ignore
-	}
-
-}
 
 // File reading will be done within the main method here
 // Command line reading comes from https://stackoverflow.com/a/868894
@@ -182,7 +30,8 @@ int main(int argc, char* argv[]){
 
 	fvMesh thisMesh = fvMesh();
 
-	fvMeshParser parser = fvMeshParser("/home/ojm40/Documents/MPhil_SIMPLE/cavity/constant/polyMesh/");
+	fvMeshParser parser = fvMeshParser("./cavity/constant/polyMesh/");
+
 	parser.readPointsFromFile(thisMesh);
 	parser.readFacesFromFile(thisMesh);
 	parser.readCellsFromFile(thisMesh);
@@ -191,56 +40,52 @@ int main(int argc, char* argv[]){
 	thisMesh.calculateFaceDeltaCoeffs();
 	thisMesh.calculateFaceCellDistanceRatios();
 
-	std::cout << thisMesh.displayMeshDetails() << std::endl;
-	//std::cout << thisMesh.displayVolumesAndAreas() << std::endl;
-	//std::cout << thisMesh.displayCentroids() << std::endl;
-	//std::cout << thisMesh.displayBoundaryFaces() << std::endl;
-	//std::cout << thisMesh.displayCellNeighbors() << std::endl;
-	//std::cout << thisMesh.displayFaceOwnerNeighbor() << std::endl;
+	//outputMeshDetails();
 
-	std::ofstream outStream("/home/ojm40/Documents/MPhil_SIMPLE/dat/2D_test.dat");
+	std::ofstream outStream("./dat/2D_test.dat");
 
-	const unsigned int nCells = thisMesh.allCells().size();
-
-	// Create storage arrays
-	arma::vec T(nCells);
-	arma::vec gamma(nCells);
-	arma::vec S(nCells);
-
-	// Array of vectors is a n x 3 matrix
-	arma::mat x(nCells, 3);
-	arma::mat u(nCells, 3);
+	const int nCells = thisMesh.allCells().size();
 
 	int testNum=0;
-	bool _test=false;
 
 	if(argc==2)
 		testNum = strtol(argv[1], nullptr, 0);
 	else if(argc==1)
 		std::cout << "No test number parsed. EXIT" << std::endl;
-	else if(argc==3)
-	{
-		std::string arg = argv[2];
-		testNum = strtol(argv[3], nullptr, 0);
-		if(arg=="-t")
-			_test=true;
-	}
+
+
+	// Create storage arrays
+	arma::mat x(nCells, 3);
+
+	std::array<arma::vec,2> u;
+	u[0] = arma::vec(nCells);
+	u[1] = arma::vec(nCells);
+
+	arma::vec P(nCells, 1.0);
+
+	arma::vec gamma(nCells);
+
+	int nFaces = thisMesh.allFaces().size();
+	arma::vec F(nFaces);
 
 	int tRes=0;
+	double t1 = 0.0, Re = 0.0, L = 0.0;
 	
-	initializeState(T, gamma, S, u, tRes, thisMesh, testNum);
+	initializeState(u, gamma, t1, tRes, Re, L, thisMesh, testNum);
 
-	fvMatrix thisMatrix = fvMatrix(nCells);
+	fvMatrix uMat = fvMatrix(thisMesh);
+	fvMatrix pMat = fvMatrix(thisMesh);
 
-	thisMesh.mergeT(T);
+	// Copy cell centroid positions into n x 3 matrix (x)
 	thisMesh.copyX(x);
 
-	outputState(outStream, x, T);
+	outputState(outStream, nCells, x, u, P);
 
-	double Tb = 0.0;
-
-	double t1 = 1.0;
 	double dt = t1 / tRes;
+
+	// Init residual storage
+	double magR, norm=-1.0, alphaP=0.2, alphaU=0.8;
+	arma::vec resP(nCells);
 
 	int numLoops = 1;
 
@@ -248,25 +93,88 @@ int main(int argc, char* argv[]){
 	do{
 		t=t+dt;
 
-		fvMatrix::discretizeRateofChange(thisMatrix, T, thisMesh.allCells(), dt);
-		fvMatrix::discretizeDiffusion(thisMatrix, gamma, thisMesh.allFaces());
-		fvMatrix::discretizeBoundaryConditions(thisMatrix, T, thisMesh.allBPs(), gamma, u, thisMesh.allFaces());
-		fvMatrix::discretizeConvectionUpwind(thisMatrix, u, thisMesh.allFaces());
+		int nIterations = 0;
 
-		//if(_test) thisMatrix.printDiscretization();
-		//thisMatrix.printDiscretization();
+		calculateFaceFluxes(F, thisMesh, u);
 
-		thisMatrix.solveLinearSystem(T);
+		// Start of SIMPLE LOOP
+		do{
+			nIterations++;
 
-		outputState(outStream, x, T);
+			// Calculate kinematic viscosity
+			calculateKinematicViscosity(gamma, u, L, Re);
 
-		fvMatrix::resetMatrix(thisMatrix, thisMesh.allCells());
+			// Discretize the momentum equation
+			discretizeMomentumEqn(uMat, u, gamma, F, thisMesh, dt, alphaU);
+			//std::cout << "Momentum Discretization:" <<std::endl;
+			//uMat.printDiscretization();
 
-		std::cout << numLoops++ << std::endl;
+			// Solve the momentum equation
+			uMat.solveLinearSystem(u[0], true);
+			uMat.solveLinearSystem(u[1], false);
+			//std::cout << "X Velocity:" <<std::endl;
+			//u[0].print();
+			//std::cout << "Y Velocity:" <<std::endl;
+			//u[1].print();
 
-	} while (t<t1);
+			// Calculate uncorrected face fluxes from velocity field
+			calculateFaceFluxes(F, thisMesh, u);
 
-	outputState(outStream, x, T);
+			// Discretize Pressure equation
+			const arma::vec POld = P;
+			//std::cout << "POld:" << std::endl;
+			//POld.print();
+
+			discretizePressureEqn(pMat, P, uMat, F, u, thisMesh);
+			std::cout << "Pressure Discretization:" <<std::endl;
+			pMat.printDiscretization();
+
+			pMat.solveLinearSystem(P, true);
+
+			//std::cout << "Pnew:" << std::endl;
+			//P.print();
+
+			//explicitUnderRelax(P, POld, alphaP);
+
+			std::cout << "FOld:" << std::endl;
+			F.print();
+			correctF(F, uMat, P, thisMesh);
+			//std::cout << "FNew:" << std::endl;
+			//F.print();
+			//std::cout <<"||F|| " << arma::norm(F) << std::endl;
+
+			//std::cout << "PUR:" << std::endl;
+			//P.print();
+
+			correctU(uMat, P, u, thisMesh);
+			//std::cout << "X Velocity:" <<std::endl;
+			//u[0].print();
+			//std::cout << "Y Velocity:" <<std::endl;
+			//u[1].print();
+
+			fvMatrix::calculateUResidual(resP, pMat, P, thisMesh, norm);
+			//std::cout << "P Residual:" <<std::endl;
+			//resP.print();
+
+			magR = arma::norm(resP);
+			std::cout << "||r|| " << magR << std::endl;
+		}
+		while (magR > 1e-8 && nIterations<10);
+		// End of SIMPLE LOOP
+
+		outputState(outStream, nCells, x, u, P);
+
+		fvMatrix::resetMatrix(uMat, nCells);
+
+		std::cout << (numLoops++) 
+			  //<< ": t=" << t 
+			  << "\n SIMPLE Iters: " << nIterations
+			  << std::endl;
+	}
+	while (t<t1);
+
+	outputState(outStream, nCells, x, u, P);
 
         return 0;
 }
+

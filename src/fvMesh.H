@@ -34,9 +34,11 @@ class fvMesh{
 		std::vector<BoundaryPatch>&        allBPs();
 
 		//Mesh utilities
-		void                               copyT(arma::vec&) const;
-		void                               mergeT(arma::vec&);
 		void                               copyX(arma::mat&) const;
+		int                                getNInternalFaces() const;
+		void                               setNInternalFaces(int);
+		int                                getNCells() const;
+		void                               setNCells(int);
 
 		//Random mesh detail methods
 		std::array<int, 4>                 getMeshDetails();
@@ -64,6 +66,8 @@ class fvMesh{
                 std::vector<Face> m_faces;
 		std::vector<Cell> m_cells;
 		std::vector<BoundaryPatch> m_boundaryPatches;
+		int m_internalFaces;
+		int m_nCells;
 };
 
 #endif

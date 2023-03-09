@@ -18,21 +18,21 @@ class BoundaryPatch{
                 BoundaryPatch(int, int, std::string);
 
 		// Public member functions
-		std::string getBoundaryPatchName() const;
-		int         getBoundaryPatchStartFace() const;
-		int         getBoundaryPatchLength() const;
-		patch       getBoundaryPatchType() const;
-		double      getBoundaryPatchValue() const;
-		void        setType(patch);
-		void        setValue(double);
+		std::string          getBoundaryPatchName() const;
+		int                  getBoundaryPatchStartFace() const;
+		int                  getBoundaryPatchLength() const;
+		patch                getBoundaryPatchType() const;
+		void                 setType(patch);
+		void                 setValue(std::array<double,3>);
+		std::array<double,3> getBoundaryPatchValue() const;
 
         private:
 		// Private member variables
-		std::string m_boundaryPatchName;
-                int         m_startFace;
-                int         m_length;
-		patch       m_type;
-		double      m_value;
+		std::string          m_boundaryPatchName;
+                int                  m_startFace;
+                int                  m_length;
+		patch                m_type;
+		std::array<double,3> m_value;
 
 		// Private members funtions
 };

@@ -37,7 +37,7 @@ patch BoundaryPatch::getBoundaryPatchType() const
 	return m_type;
 }
 
-double BoundaryPatch::getBoundaryPatchValue() const
+std::array<double,3> BoundaryPatch::getBoundaryPatchValue() const
 {
 	return m_value;
 }
@@ -47,7 +47,7 @@ void BoundaryPatch::setType(patch p)
 	m_type = p;
 }
 
-void BoundaryPatch::setValue(double v)
+void BoundaryPatch::setValue(std::array<double,3> v)
 {
 	m_value = v;
 }
