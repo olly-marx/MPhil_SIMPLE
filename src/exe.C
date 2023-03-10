@@ -40,8 +40,6 @@ int main(int argc, char* argv[]){
 	thisMesh.calculateFaceDeltaCoeffs();
 	thisMesh.calculateFaceCellDistanceRatios();
 
-	//outputMeshDetails();
-
 	std::ofstream outStream("./dat/2D_test.dat");
 
 	const int nCells = thisMesh.allCells().size();
@@ -105,46 +103,51 @@ int main(int argc, char* argv[]){
 			calculateKinematicViscosity(gamma, u, L, Re);
 
 			// Discretize the momentum equation
-			discretizeMomentumEqn(uMat, u, gamma, F, thisMesh, dt, alphaU);
-			//std::cout << "Momentum Discretization:" <<std::endl;
-			//uMat.printDiscretization();
+			fvMatrix::resetMatrix(uMat, nCells);
+			discretizeMomentumEqn(uMat, u, P, gamma, F, thisMesh, dt, alphaU);
+			std::cout << "Momentum Discretization:" <<std::endl;
+			uMat.printDiscretization();
 
 			// Solve the momentum equation
 			uMat.solveLinearSystem(u[0], true);
 			uMat.solveLinearSystem(u[1], false);
-			//std::cout << "X Velocity:" <<std::endl;
-			//u[0].print();
-			//std::cout << "Y Velocity:" <<std::endl;
-			//u[1].print();
+			std::cout << "X Velocity:" <<std::endl;
+			u[0].print();
+			std::cout << "Y Velocity:" <<std::endl;
+			u[1].print();
 
 			// Calculate uncorrected face fluxes from velocity field
 			calculateFaceFluxes(F, thisMesh, u);
+			std::cout << "FOld:" << std::endl;
+			F.print();
+			std::cout << "Initial continuity" << std::endl;
+			divUCell(F, thisMesh);
 
 			// Discretize Pressure equation
 			const arma::vec POld = P;
-			//std::cout << "POld:" << std::endl;
-			//POld.print();
+			std::cout << "POld:" << std::endl;
+			POld.print();
 
+			fvMatrix::resetMatrix(pMat, nCells);
 			discretizePressureEqn(pMat, P, uMat, F, u, thisMesh);
 			std::cout << "Pressure Discretization:" <<std::endl;
 			pMat.printDiscretization();
 
 			pMat.solveLinearSystem(P, true);
 
-			//std::cout << "Pnew:" << std::endl;
-			//P.print();
+			std::cout << "Pnew:" << std::endl;
+			P.print();
 
-			//explicitUnderRelax(P, POld, alphaP);
-
-			std::cout << "FOld:" << std::endl;
-			F.print();
 			correctF(F, uMat, P, thisMesh);
-			//std::cout << "FNew:" << std::endl;
-			//F.print();
-			//std::cout <<"||F|| " << arma::norm(F) << std::endl;
+			std::cout << "FNew:" << std::endl;
+			F.print();
+			std::cout << "Corrected continuity" << std::endl;
+			divUCell(F, thisMesh);
 
 			//std::cout << "PUR:" << std::endl;
 			//P.print();
+
+			explicitUnderRelax(P, POld, alphaP);
 
 			correctU(uMat, P, u, thisMesh);
 			//std::cout << "X Velocity:" <<std::endl;
@@ -158,13 +161,12 @@ int main(int argc, char* argv[]){
 
 			magR = arma::norm(resP);
 			std::cout << "||r|| " << magR << std::endl;
+
 		}
-		while (magR > 1e-8 && nIterations<10);
+		while (magR > 1e-8 && nIterations<2);
 		// End of SIMPLE LOOP
 
 		outputState(outStream, nCells, x, u, P);
-
-		fvMatrix::resetMatrix(uMat, nCells);
 
 		std::cout << (numLoops++) 
 			  //<< ": t=" << t 

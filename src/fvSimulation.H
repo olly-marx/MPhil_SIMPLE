@@ -23,7 +23,7 @@ void initializeState(std::array<arma::vec, 2>& u, arma::vec& gamma, double& t1,
 void outputMeshDetails(fvMesh&);
 
 void discretizeMomentumEqn(fvMatrix& thisMatrix,
-		std::array<arma::vec,2>& u, arma::vec& gamma,
+		std::array<arma::vec,2>& u, arma::vec& P, arma::vec& gamma,
 		arma::vec& F, fvMesh& thisMesh, double dt, double alphaU);
 
 void discretizePressureEqn(fvMatrix& pMat, arma::vec& P, fvMatrix& uMat,

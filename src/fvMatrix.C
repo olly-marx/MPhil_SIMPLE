@@ -181,6 +181,31 @@ void fvMatrix::discretizeConvectionUpwind(fvMatrix& m, fvMesh& thisMesh,
 	}
 }
 
+void fvMatrix::discretizeGradP(fvMatrix& m, arma::vec& P, fvMesh& thisMesh)
+{
+	// Loop over internal faces
+	std::vector<Face>& faceArr = thisMesh.allFaces();
+	std::vector<BoundaryPatch>& bpArr = thisMesh.allBPs();
+
+	for(int i=0;i<thisMesh.getNInternalFaces();i++)
+	{
+		std::array<double,3> Sf = faceArr[i].getFaceAreaVector();
+		double fx = faceArr[i].getfx();
+		
+		int o = faceArr[i].getOwner();
+		int n = faceArr[i].getNeighbor();
+
+		// gradP calculations
+		double Pf = fx*P(o) + (1.0-fx)*P(n);
+
+		m.bx(o) -= Sf[0]*Pf;
+		m.by(o) -= Sf[1]*Pf;
+
+		m.bx(n) += Sf[0]*Pf;
+		m.by(n) += Sf[1]*Pf;
+	}
+}
+
 void fvMatrix::discretizeContinuity(fvMatrix& m, fvMesh& thisMesh, 
 		const arma::vec& F)
 {
@@ -313,10 +338,10 @@ void fvMatrix::printDiscretization()
 		std::cout<< std::setprecision(2)  << "|";
 		for(int i=0;i<m_bx.size();i++)
 		{
-			std::cout << std::setw(4) << m_A(i,j);
+			std::cout << std::setw(10) << m_A(i,j);
 		}
 		std::cout << "| | x" << j << " | = | " 
-				<< std::setw(5) << m_bx(j) << "\t| , | " 
+				<< std::setw(10) << m_bx(j) << "\t| , | " 
 				<< m_by(j) << " |" 
 				<< std::endl;
 	}

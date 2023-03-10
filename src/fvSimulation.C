@@ -15,12 +15,13 @@
 #include "fvSimulation.H"
 
 void discretizeMomentumEqn(fvMatrix& uMat,
-		std::array<arma::vec,2>& u, arma::vec& gamma,
+		std::array<arma::vec,2>& u, arma::vec& P, arma::vec& gamma,
 		arma::vec& F, fvMesh& thisMesh, double dt, double alphaU)
 {
 	//fvMatrix::discretizeRateofChange(uMat, u, thisMesh, dt);
 	fvMatrix::discretizeLaplacian(uMat, gamma, thisMesh, false);
 	fvMatrix::discretizeConvectionUpwind(uMat, thisMesh, F, u);
+	//fvMatrix::discretizeGradP(uMat, P, thisMesh);
 	//fvMatrix::implicitUnderRelax(uMat, u, thisMesh, alphaU);
 }
 
@@ -85,6 +86,13 @@ void correctF(arma::vec& F, fvMatrix& uMat, arma::vec& P, fvMesh& thisMesh)
 
 	// Calculate gradP
 	calculateGradP(gradP, P, thisMesh);
+	
+	std::cout << "P" << std::endl;
+	P.print();
+	std::cout << "gradP X" << std::endl;
+	gradP[0].print();
+	std::cout << "gradP Y" << std::endl;
+	gradP[1].print();
 
 	// Calculate 1/aP cell values
 	const arma::vec rD = uMat.recipD();
@@ -110,8 +118,16 @@ void correctF(arma::vec& F, fvMatrix& uMat, arma::vec& P, fvMesh& thisMesh)
 		// 1/aP face reconstruction
 		double rDf = fx*rD(o) + (1.0-fx)*rD(n);
 
+		std::cout << "\no " << o
+			  << "\nn " << n
+			  << "\ngradPf " << gradPf[0]
+			  << " "<< gradPf[1]
+			  << "\nSf " << Sf[0] << " " << Sf[1]
+			  << "\nrD " << rD[o] << " " << rD(n) << " " << rDf
+			  << "\nF " << F(i);
 		//Finally, correct F
 		F(i) = F(i) - rDf*dot(Sf, gradPf);
+		std::cout << "\nFcorr " << F(i) << std::endl;
 	}
 
 	// Now loop over boundary patches
@@ -161,11 +177,8 @@ void correctU(fvMatrix& uMat, arma::vec& P,
 	//Finally, loop through cells and correct cell centre velocities
 	for(std::size_t k=0;k<thisMesh.allCells().size();k++)
 	{
-		//std::cout << "gradP " << gradP[0](k) << " " << gradP[1](k) << std::endl;
-		//std::cout << "ui " << u[0](k) << " " << u[1](k) << std::endl;
 		u[0](k) = u[0](k) - rD(k)*gradP[0](k);
 		u[1](k) = u[1](k) - rD(k)*gradP[1](k);
-		//std::cout << "ucorr " << u[0](k) << " " << u[1](k) << std::endl;
 	}
 
 }
@@ -201,34 +214,12 @@ void calculateGradP(std::array<arma::vec,2>& gradP, arma::vec& P, fvMesh& thisMe
 		gradP[0](n) -= Sf[0]*Pf;
 		gradP[1](n) -= Sf[1]*Pf;
 	}
-
-	// Now loop over boundary patches
-	for(std::size_t i=0;i<bpArr.size();i++)
-	{
-		const int length = bpArr[i].getBoundaryPatchLength();
-		const int start = bpArr[i].getBoundaryPatchStartFace();
-
-		for(int j=0;j<length;j++)
-		{
-			const Face& f = faceArr[start+j];
-
-			int o = f.getOwner();
-
-			std::array<double,3> Sf = f.getFaceAreaVector();
-
-			if(bpArr[i].getBoundaryPatchType()==fixedValue)
-			{
-				//gradP[0](o) += Sf[0]*P(o);
-				//gradP[1](o) += Sf[1]*P(o);
-			}
-		}
-	}
 }
 
 void divUCell(arma::vec& F, fvMesh& thisMesh)
 {
 	std::vector<double> Fluxes;
-	Fluxes.resize(4);
+	Fluxes.resize(9);
 	std::vector<Face>& faceArr = thisMesh.allFaces();
 	for(int i=0;i<faceArr.size();i++)
 	{
@@ -238,14 +229,21 @@ void divUCell(arma::vec& F, fvMesh& thisMesh)
 		Fluxes[o] += F(i);
 		if(n>=0)
 			Fluxes[n] -= F(i);
+		else
+			break;
 	}
 
-	std::cout << "Fluxes:" 
-		  << "\n0 " << Fluxes[0]
-		  << "\n1 " << Fluxes[1]
-		  << "\n2 " << Fluxes[2]
-		  << "\n3 " << Fluxes[3]
-		  << std::endl;
+		std::cout << "Fluxes:" 
+			  << "\n0 " << (fabs(Fluxes[0])<1e-18 ? 0.0 : Fluxes[0])
+			  << "\n1 " << (fabs(Fluxes[1])<1e-18 ? 0.0 : Fluxes[1])
+			  << "\n2 " << (fabs(Fluxes[2])<1e-18 ? 0.0 : Fluxes[2])
+			  << "\n3 " << (fabs(Fluxes[3])<1e-18 ? 0.0 : Fluxes[3])
+			  << "\n4 " << (fabs(Fluxes[4])<1e-18 ? 0.0 : Fluxes[4])
+			  << "\n5 " << (fabs(Fluxes[5])<1e-18 ? 0.0 : Fluxes[5])
+			  << "\n6 " << (fabs(Fluxes[6])<1e-18 ? 0.0 : Fluxes[6])
+			  << "\n7 " << (fabs(Fluxes[7])<1e-18 ? 0.0 : Fluxes[7])
+			  << "\n8 " << (fabs(Fluxes[8])<1e-18 ? 0.0 : Fluxes[8])
+			  << std::endl;
 }
 
 void outputState(std::ofstream& file, unsigned int nCells, const arma::mat& x,

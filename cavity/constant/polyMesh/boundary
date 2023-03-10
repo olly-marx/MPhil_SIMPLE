@@ -20,43 +20,43 @@ FoamFile
     {
         type            empty;
         inGroups        List<word> 1(empty);
-        nFaces          16;
-        startFace       24;
+        nFaces          9;
+        startFace       12;
     }
     back
     {
         type            empty;
         inGroups        List<word> 1(empty);
-        nFaces          16;
-        startFace       40;
+        nFaces          9;
+        startFace       21;
     }
     top
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          4;
-        startFace       56;
+        nFaces          3;
+        startFace       30;
     }
     bottom
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          4;
-        startFace       60;
+        nFaces          3;
+        startFace       33;
     }
     left
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          4;
-        startFace       64;
+        nFaces          3;
+        startFace       36;
     }
     right
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          4;
-        startFace       68;
+        nFaces          3;
+        startFace       39;
     }
 )
 

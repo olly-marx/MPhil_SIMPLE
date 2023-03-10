@@ -28,6 +28,8 @@ class fvMatrix{
 		static void discretizeConvectionUpwind(fvMatrix& m, fvMesh& thisMesh,
 				const arma::vec& F, std::array<arma::vec,2>& T);
 
+		static void discretizeGradP(fvMatrix& m, arma::vec& P, fvMesh& thisMesh);
+
 		static void implicitUnderRelax(fvMatrix& m, std::array<arma::vec,2>& u, fvMesh& thisMesh,
 				double alphaU);
 
