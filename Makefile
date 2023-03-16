@@ -1,8 +1,5 @@
 CC = c++
-CFLAGS = -std=c++17 -Wpedantic -Wall -Wextra -Wshadow -Wnon-virtual-dtor \
-	  -Wold-style-cast -Wcast-align -Wuseless-cast \
-	  -Wdouble-promotion -Wnull-dereference -Wmisleading-indentation \
-	  -O2
+CFLAGS = -std=c++17 -O2
 LIBFLAGS = -larmadillo -lconfig++
 DBGFLAGS = -g -O0 -fsanitize=address -fsanitize=bounds -lubsan
 
@@ -12,7 +9,7 @@ OBJ = ./obj
 SET = ./stg
 DAT = ./dat
 
-TARGET = $(BIN)/fvMesh
+TARGET = $(BIN)/SIMPLE
 
 INCS = $(wildcard $(SRC)/*.H)
 SRCS = $(wildcard $(SRC)/*.C)
@@ -26,47 +23,17 @@ $(TARGET): $(OBJS)
 $(OBJ)/%.o: $(SRC)/%.C $(INCS)
 	$(CC) $(CFLAGS) -o $@ -c $< $(INC_DIRS)
 
-PHONY += debug
-debug: 
-	CFLAGS += $(DBGFLAGS)
-	$(TARGET)
-
-PHONY += release
-release: 
-	CFLAGS += $(OPTFLAG)
-	$(TARGET)
-
-PHONY += refactor
-refactor: 
-	CFLAGS += $(REFFLAGS)
-	$(TARGET)
-
-PHONY += plotGifs
+PHONY += test
 FINDDATS = $(wildcard $(DAT)/*.dat)
 RMSUFFIX := $(patsubst %.dat, %, $(FINDDATS))
 RMDIR := $(patsubst ./dat/%, %, $(RMSUFFIX))
-plotGifs:
-	for filename in $(RMDIR) ; do \
-		gnuplot -e "filename='$$filename'" ./plotGif.plt ; \
-	done
-
-PHONY += plot2D
-FINDDATS = $(wildcard $(DAT)/*.dat)
-RMSUFFIX := $(patsubst %.dat, %, $(FINDDATS))
-RMDIR := $(patsubst ./dat/%, %, $(RMSUFFIX))
-plot2D:
+test: 
+	$(TARGET) 0 1
+	$(TARGET) 0 5
+	$(TARGET) 0 10
+	$(TARGET) 0 20
 	for filename in $(RMDIR) ; do \
 		gnuplot -e "filename='$$filename'" ./plot2D.plt ; \
 	done
-
-PHONY += clean
-clean:
-	rm $(OBJ)/*.o
-	rm $(BIN)/*
-
-PHONY += cleanresults
-cleanresults:
-	rm $(DAT)/*.dat
-	rm *.gif
 
 .PHONY: $(PHONY)

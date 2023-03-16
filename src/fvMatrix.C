@@ -61,8 +61,9 @@ void fvMatrix::discretizeLaplacian(fvMatrix& m, const arma::vec& gamma,
 
 		double Sf =   mod (f.getFaceAreaVector());
 		double df =   f.getDelta();
+		double fx =   f.getfx();
 
-		double aN = gamma(owner) * df * Sf;
+		double aN = (fx*gamma(owner) + (1.0-fx)*gamma(neighbor)) * df * Sf;
 
 		m.A(owner,owner) += pressure ? -aN : aN;
 		m.A(neighbor,neighbor) += pressure ? -aN : aN;
@@ -93,14 +94,23 @@ void fvMatrix::discretizeLaplacian(fvMatrix& m, const arma::vec& gamma,
 				double by =   gamma(owner) * mod(Sf) * gb[1] * df;
 				double aP =   gamma(owner) * mod(Sf) * df;
 
-				m.bx(owner) += pressure ? -bx : bx;
-				m.by(owner) += pressure ? -by : by;
-				m.A(owner, owner) += pressure ? -aP : aP;
+				m.bx(owner) += bx;
+				m.by(owner) += by;
+				m.A(owner, owner) += aP;
 			}
 			else if(bpArr[i].getBoundaryPatchType()==fixedValue && pressure)
 			{
 				// Neumann Diffusion for pressure
-				// Do nothing
+				//std::array<double,3> Sf = f.getFaceAreaVector();
+				//double               df = f.getDelta();
+
+				//double bx =   gamma(owner) * mod(Sf) * P(owner) * df;
+				//double by =   gamma(owner) * mod(Sf) * P(owner) * df;
+				//double aP =   gamma(owner) * mod(Sf) * df;
+
+				//m.bx(owner) += pressure ? -bx : bx;
+				//m.by(owner) += pressure ? -by : by;
+				//m.A(owner, owner) += pressure ? -aP : aP;
 			}
 			else if(bpArr[i].getBoundaryPatchType()==fixedGrad)
 			{
@@ -181,61 +191,20 @@ void fvMatrix::discretizeConvectionUpwind(fvMatrix& m, fvMesh& thisMesh,
 	}
 }
 
-void fvMatrix::discretizeGradP(fvMatrix& m, arma::vec& P, fvMesh& thisMesh)
-{
-	// Loop over internal faces
-	std::vector<Face>& faceArr = thisMesh.allFaces();
-	std::vector<BoundaryPatch>& bpArr = thisMesh.allBPs();
-
-	for(int i=0;i<thisMesh.getNInternalFaces();i++)
-	{
-		std::array<double,3> Sf = faceArr[i].getFaceAreaVector();
-		double fx = faceArr[i].getfx();
-		
-		int o = faceArr[i].getOwner();
-		int n = faceArr[i].getNeighbor();
-
-		// gradP calculations
-		double Pf = fx*P(o) + (1.0-fx)*P(n);
-
-		m.bx(o) -= Sf[0]*Pf;
-		m.by(o) -= Sf[1]*Pf;
-
-		m.bx(n) += Sf[0]*Pf;
-		m.by(n) += Sf[1]*Pf;
-	}
-}
-
 void fvMatrix::discretizeContinuity(fvMatrix& m, fvMesh& thisMesh, 
 		const arma::vec& F)
 {
 	std::vector<Face>& faceArr = thisMesh.allFaces();
 	std::vector<BoundaryPatch>& bpArr = thisMesh.allBPs();
 
-	for(int i=0;i<thisMesh.getNInternalFaces();i++)
+	for(int i=0;i<faceArr.size();i++)
 	{
-		const Face& f = faceArr[i];
-			
-		int owner = f.getOwner();
-		int neighbor = f.getNeighbor();
-
-		m.bx(owner) += F(i);
-		m.bx(neighbor) -= F(i);
-	}
-	
-	for(std::size_t i=0;i<bpArr.size();i++)
-	{
-		const int length = bpArr[i].getBoundaryPatchLength();
-		const int start = bpArr[i].getBoundaryPatchStartFace();
-
-		for(int j=0;j<length;j++)
-		{
-			const Face& f = faceArr[start+j];
-
-			int owner = f.getOwner();
-
-			m.bx(owner) += F(start+j);
-		}
+		int o = faceArr[i].getOwner();
+		int n = faceArr[i].getNeighbor();
+		
+		m.bx(o) += F(i);
+		if(n>=0)
+			m.bx(n) -= F(i);
 	}
 }
 

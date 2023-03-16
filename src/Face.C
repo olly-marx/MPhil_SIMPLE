@@ -114,7 +114,7 @@ void Face::calcFaceAreaVector(const std::vector<std::array<double, 3>> &points)
 
                 // Vector differences to set up cross product
                 std::array<double,3> vector1, vector2;
-		vector1 = p2 - p;
+		vector1 = p - p2;
 		vector2 = m_faceCentroid - p2;
 
                 // take the cross product * 0.5 to get area of each triangle

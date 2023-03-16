@@ -15,10 +15,12 @@
 #include "fvMatrix.H"
 
 void outputState(std::ofstream& file, unsigned int nCells, const arma::mat& x,
-		const std::array<arma::vec,2>& u, const arma::vec& gradP);
+		const std::array<arma::vec,2>& u, const arma::vec& gradP,
+		const arma::vec& F, fvMesh& thisMesh);
 
 void initializeState(std::array<arma::vec, 2>& u, arma::vec& gamma, double& t1,
-		int& tRes, double& Re, double& L, fvMesh& thisMesh, int testNum);
+		int& tRes, double& Re, double& L, double& alphaU, double& alphaP,
+		fvMesh& thisMesh, int testNum);
 
 void outputMeshDetails(fvMesh&);
 
@@ -38,11 +40,16 @@ void correctU(fvMatrix& uMat, arma::vec& P,
 
 void calculateGradP(std::array<arma::vec,2>& gradP, arma::vec& P, fvMesh& thisMesh);
 
-void divUCell(arma::vec& F, fvMesh& thisMesh);
+void divU(arma::vec& F, fvMesh& thisMesh);
 
 void explicitUnderRelax(arma::vec& x, const arma::vec& xOld, const double& alphax);
 
 void calculateKinematicViscosity(arma::vec& gamma, const std::array<arma::vec,2> u,
 		double L, double Re);
+
+void buildReport(arma::mat& report, const fvMatrix& uMat, const fvMatrix& pMat,
+		const fvMesh& thisMesh);
+
+void printReport(arma::mat& report);
 
 #endif

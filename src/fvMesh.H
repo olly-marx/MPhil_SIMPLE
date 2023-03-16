@@ -42,13 +42,13 @@ class fvMesh{
 
 		//Random mesh detail methods
 		std::array<int, 4>                 getMeshDetails();
-		double                             cellVolume(int);
-		std::array<double,3>               faceAreaVector(int);
-		std::array<double,3>               cellCentroid(int);
-		std::array<double,3>               faceCentroid(int);
+		double                             cellVolume(int) const;
+		std::array<double,3>               faceAreaVector(int) const;
+		std::array<double,3>               cellCentroid(int) const;
+		std::array<double,3>               faceCentroid(int) const;
 		std::vector<std::array<int,2>>     boundaryFaceOwner(BoundaryPatch);
-		std::vector<int>                   cellNeighbors(int);
-		std::array<int,2>                  faceOwnerNeighbor(int);
+		std::vector<int>                   cellNeighbors(int) const;
+		std::array<int,2>                  faceOwnerNeighbor(int) const;
 
 		std::string displayMeshDetails();
 		std::string displayVolumesAndAreas();

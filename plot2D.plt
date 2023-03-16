@@ -1,18 +1,33 @@
 set terminal postscript eps enhanced color
-set output filename.'.eps'
 
-stats './dat/'.filename.'.dat' nooutput
+set output './results/'.filename.'.eps'
 
-set xlabel "x"
-set xlabel "y"
-set ylabel "T"
-#set yrange [0:1.1]
+set size ratio 1/1
+
+set xrange [0:0.1]
+set xtics 0,0.05,0.1
+set yrange [0:0.1]
+set ytics 0,0.05,0.1
+
+set ticslevel 0.5
+
+set view map
 
 set pm3d at bs
-set palette
+set style fill transparent solid 0.8 noborder
 set hidden3d
-set view 90, 0, 1, 1
 
-set zrange [0.0:1.1]
+set palette rgb 33,13,10
 
-splot './dat/'.filename.'.dat' i (20) using 1:2:3 with pm3d
+set parametric
+set isosamples 51, 51
+
+set title "Lid driven cavity p-v fields after ".filename." iterations"
+
+set xlabel '{/:Italic x}' font ",12"
+set ylabel '{/:Italic y}' font ",12"
+set cblabel '{/:Italic p}' font ",12"
+set cbrange [-0.05:0.06]
+plot './dat/'.filename.'.dat' i (1) u 1:2:6 w image notitle, \
+	'./dat/'.filename.'.dat' i (1) u 1:2:($3/50):($4/50) every 2:2 w vec \
+	lc -1 head filled size screen 0.01,30,45 notitle

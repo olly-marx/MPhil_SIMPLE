@@ -40,20 +40,25 @@ int main(int argc, char* argv[]){
 	thisMesh.calculateFaceDeltaCoeffs();
 	thisMesh.calculateFaceCellDistanceRatios();
 
-	std::ofstream outStream("./dat/2D_test.dat");
-
 	const int nCells = thisMesh.allCells().size();
 
-	int testNum=0;
+	int testNum=0, totalIterations=0;
 
-	if(argc==2)
+	if(argc==3)
+	{
 		testNum = strtol(argv[1], nullptr, 0);
-	else if(argc==1)
-		std::cout << "No test number parsed. EXIT" << std::endl;
+		totalIterations = strtol(argv[2], nullptr, 0);
+	}
+	else if(argc<3)
+		std::cout << "Incorrect number of arguments parsed. EXIT" << std::endl;
+
+	std::ofstream outStream("./dat/"+std::to_string(totalIterations)+".dat");
 
 
 	// Create storage arrays
 	arma::mat x(nCells, 3);
+
+	arma::mat report(7, 4);
 
 	std::array<arma::vec,2> u;
 	u[0] = arma::vec(nCells);
@@ -67,9 +72,9 @@ int main(int argc, char* argv[]){
 	arma::vec F(nFaces);
 
 	int tRes=0;
-	double t1 = 0.0, Re = 0.0, L = 0.0;
+	double t1 = 0.0, Re = 0.0, L = 0.0, alphaU=0.0, alphaP=0.0;
 	
-	initializeState(u, gamma, t1, tRes, Re, L, thisMesh, testNum);
+	initializeState(u, gamma, t1, tRes, Re, L, alphaU, alphaP, thisMesh, testNum);
 
 	fvMatrix uMat = fvMatrix(thisMesh);
 	fvMatrix pMat = fvMatrix(thisMesh);
@@ -77,12 +82,12 @@ int main(int argc, char* argv[]){
 	// Copy cell centroid positions into n x 3 matrix (x)
 	thisMesh.copyX(x);
 
-	outputState(outStream, nCells, x, u, P);
+	outputState(outStream, nCells, x, u, P, F, thisMesh);
 
 	double dt = t1 / tRes;
 
 	// Init residual storage
-	double magR, norm=-1.0, alphaP=0.2, alphaU=0.8;
+	double magR, norm=-1.0;
 	arma::vec resP(nCells);
 
 	int numLoops = 1;
@@ -99,83 +104,70 @@ int main(int argc, char* argv[]){
 		do{
 			nIterations++;
 
+			std::cout << "\n-------------------------------SIMPLE Iteration #"
+				  << nIterations << "-------------------------------\n"
+				  << std::endl;
+
 			// Calculate kinematic viscosity
 			calculateKinematicViscosity(gamma, u, L, Re);
 
 			// Discretize the momentum equation
 			fvMatrix::resetMatrix(uMat, nCells);
 			discretizeMomentumEqn(uMat, u, P, gamma, F, thisMesh, dt, alphaU);
-			std::cout << "Momentum Discretization:" <<std::endl;
-			uMat.printDiscretization();
 
 			// Solve the momentum equation
 			uMat.solveLinearSystem(u[0], true);
 			uMat.solveLinearSystem(u[1], false);
-			std::cout << "X Velocity:" <<std::endl;
-			u[0].print();
-			std::cout << "Y Velocity:" <<std::endl;
-			u[1].print();
 
 			// Calculate uncorrected face fluxes from velocity field
 			calculateFaceFluxes(F, thisMesh, u);
-			std::cout << "FOld:" << std::endl;
-			F.print();
-			std::cout << "Initial continuity" << std::endl;
-			divUCell(F, thisMesh);
+			std::cout << "\nMomentum predictor step completed..." << std::endl;
+			divU(F, thisMesh);
+
+			// Store old pressure and print it
+			const arma::vec POld = P;
 
 			// Discretize Pressure equation
-			const arma::vec POld = P;
-			std::cout << "POld:" << std::endl;
-			POld.print();
-
 			fvMatrix::resetMatrix(pMat, nCells);
 			discretizePressureEqn(pMat, P, uMat, F, u, thisMesh);
-			std::cout << "Pressure Discretization:" <<std::endl;
-			pMat.printDiscretization();
 
+			if(nIterations==1)
+				buildReport(report, uMat, pMat, thisMesh);
+
+			// Solve Pressure Equation
 			pMat.solveLinearSystem(P, true);
 
-			std::cout << "Pnew:" << std::endl;
-			P.print();
-
+			// Correct face fluzes with new pressure field
 			correctF(F, uMat, P, thisMesh);
-			std::cout << "FNew:" << std::endl;
-			F.print();
-			std::cout << "Corrected continuity" << std::endl;
-			divUCell(F, thisMesh);
+			std::cout << "\nPressure corrector step completed..." << std::endl;
+			divU(F, thisMesh);
 
-			//std::cout << "PUR:" << std::endl;
-			//P.print();
-
+			// Explicitly underrelax pressure
 			explicitUnderRelax(P, POld, alphaP);
 
+			// Correct velocities with new pressure field
 			correctU(uMat, P, u, thisMesh);
-			//std::cout << "X Velocity:" <<std::endl;
-			//u[0].print();
-			//std::cout << "Y Velocity:" <<std::endl;
-			//u[1].print();
 
+			//Calculate and print pressure matrix residual
 			fvMatrix::calculateUResidual(resP, pMat, P, thisMesh, norm);
-			//std::cout << "P Residual:" <<std::endl;
-			//resP.print();
 
-			magR = arma::norm(resP);
-			std::cout << "||r|| " << magR << std::endl;
+			//outputState(outStream, nCells, x, u, P, F, thisMesh);
 
 		}
-		while (magR > 1e-8 && nIterations<2);
+		while (nIterations<totalIterations);
 		// End of SIMPLE LOOP
 
-		outputState(outStream, nCells, x, u, P);
-
-		std::cout << (numLoops++) 
+		std::cout 
+			  //<< (numLoops++) 
 			  //<< ": t=" << t 
 			  << "\n SIMPLE Iters: " << nIterations
 			  << std::endl;
 	}
 	while (t<t1);
 
-	outputState(outStream, nCells, x, u, P);
+	printReport(report);
+
+	outputState(outStream, nCells, x, u, P, F, thisMesh);
 
         return 0;
 }

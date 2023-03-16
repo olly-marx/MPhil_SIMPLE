@@ -106,19 +106,23 @@ std::array<int, 4> fvMesh::getMeshDetails(){
 	return details;
 }
 
-double fvMesh::cellVolume(int c){
+double fvMesh::cellVolume(int c) const
+{
 	return m_cells[c].getCellVolume();
 }
 
-std::array<double,3> fvMesh::faceAreaVector(int f){
+std::array<double,3> fvMesh::faceAreaVector(int f) const
+{
 	return m_faces[f].getFaceAreaVector();
 }
 
-std::array<double,3> fvMesh::cellCentroid(int c){
+std::array<double,3> fvMesh::cellCentroid(int c) const
+{
 	return m_cells[c].getCellCentroid();
 }
 
-std::array<double,3> fvMesh::faceCentroid(int f){
+std::array<double,3> fvMesh::faceCentroid(int f) const
+{
 	return m_faces[f].getFaceCentroid();
 }
 
@@ -132,7 +136,8 @@ std::vector<std::array<int,2>> fvMesh::boundaryFaceOwner(BoundaryPatch bp){
 	return faceCellPairs;
 }
 
-std::vector<int> fvMesh::cellNeighbors(int c){
+std::vector<int> fvMesh::cellNeighbors(int c) const
+{
 	std::vector<int> allCellNeighbors;
 	std::vector<int> cellFaces = m_cells[c].getCellFaceIndices();
 	for(unsigned int i=0;i<cellFaces.size();i++){
@@ -144,7 +149,7 @@ std::vector<int> fvMesh::cellNeighbors(int c){
 	return allCellNeighbors;
 }
 
-std::array<int,2> fvMesh::faceOwnerNeighbor(int f)
+std::array<int,2> fvMesh::faceOwnerNeighbor(int f) const
 {
 	return {m_faces[f].getOwner(), m_faces[f].getNeighbor()};
 }
